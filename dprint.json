@@ -1,0 +1,21 @@
+{
+  "typescript": {
+    "arrowFunction.useParentheses": "preferNone",
+    "binaryExpression.linePerExpression": true,
+    "enumDeclaration.memberSpacing": "newLine",
+    "jsx.quoteStyle": "preferSingle",
+    "lineWidth": 80,
+    "memberExpression.linePerExpression": true,
+    "nextControlFlowPosition": "sameLine",
+    "quoteProps": "asNeeded",
+    "quoteStyle": "preferSingle",
+    "semiColons": "asi",
+  },
+  "excludes": [
+    "**/node_modules"
+  ],
+  "plugins": [
+    "https://plugins.dprint.dev/typescript-0.91.0.wasm"
+  ]
+}
+
