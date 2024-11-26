@@ -1,4 +1,10 @@
-import type { PayloadAction } from '@reduxjs/toolkit'
+import {
+  createAsyncThunk,
+  type PayloadAction,
+  SerializedError,
+} from '@reduxjs/toolkit'
+import { Effect, pipe, Schema } from 'effect'
+import { serializeSuccess, TaggedError } from 'effect/Schema'
 import { createAppSlice } from '../../app/createAppSlice'
 import type { AppThunk } from '../../app/store'
 import { fetchCount } from './counterAPI'
@@ -12,6 +18,40 @@ const initialState: CounterSliceState = {
   value: 0,
   status: 'idle',
 }
+
+interface User {
+  readonly userId: number
+  readonly name: string
+}
+
+export class FetchUserError extends TaggedError<FetchUserError>()(
+  'FetchUserError',
+  { message: Schema.String, userId: Schema.Number },
+) {}
+
+const fetchUserByIdEffect = (userId: number) =>
+  Effect.suspend(() => {
+    return Math.random() > 0.0001
+      ? Effect.succeed({ userId, name: 'some-name' })
+      : Effect.fail(
+        new FetchUserError({ message: 'failed to fetch user', userId }),
+      )
+  })
+
+export const fetchUserById = createAsyncThunk<User, number, {
+  rejectValue: typeof FetchUserError.Encoded
+}>(
+  'users/fetchByIdStatus',
+  async (userId: number, thunkAPI) =>
+    Effect.runPromise(pipe(
+      fetchUserByIdEffect(userId),
+      Effect.catchTag('FetchUserError', error =>
+        Effect
+          .succeed(thunkAPI.rejectWithValue(
+            Schema.encodeSync(FetchUserError)(error),
+          ))),
+    )),
+)
 
 // If you are not using async thunks you can use the standalone `createSlice`.
 export const counterSlice = createAppSlice({
@@ -61,6 +101,14 @@ export const counterSlice = createAppSlice({
       },
     ),
   }),
+  extraReducers: builder => {
+    // Add reducers for additional action types here, and handle loading state as needed
+    builder.addCase(fetchUserById.fulfilled, (state, action) => {
+      console.log('fetchUserById.fulfilled', action)
+      state.status = 'idle'
+      state.value = state.value + action.payload.userId
+    })
+  },
   // You can define your selectors here. These selectors receive the slice
   // state as their first argument.
   selectors: {

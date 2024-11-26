@@ -4,7 +4,9 @@ import type { CounterSliceState } from './counterSlice'
 import {
   counterSlice,
   decrement,
+  fetchUserById,
   increment,
+  incrementAsync,
   incrementByAmount,
   selectCount,
 } from './counterSlice'
@@ -54,5 +56,32 @@ describe<LocalTestContext>('counter reducer', it => {
     store.dispatch(incrementByAmount(2))
 
     expect(selectCount(store.getState())).toBe(5)
+  })
+
+  it('should handle incrementAsync', async ({ store }) => {
+    expect(selectCount(store.getState())).toBe(3)
+
+    const a = await store.dispatch(incrementAsync(2))
+
+    expect(selectCount(store.getState())).toBe(5)
+  })
+
+  it.only('should handle incrementByAmount', async ({ store }) => {
+    store.subscribe((...args) => console.log(store.getState()))
+
+    expect(selectCount(store.getState())).toBe(3)
+
+    const userId = 2
+    const res = await store.dispatch(fetchUserById(userId))
+    const { type } = res
+
+    console.log('res', res)
+
+    expect(res).toMatchObject({
+      type: 'users/fetchByIdStatus/fulfilled',
+      payload: { userId, name: 'some-name' },
+    })
+
+    expect(selectCount(store.getState())).toBe(3 + userId)
   })
 })
