@@ -1,7 +1,7 @@
-import { useState } from "react"
+import { useState } from 'react'
 
-import { useAppDispatch, useAppSelector } from "../../app/hooks"
-import styles from "./Counter.module.css"
+import { useAppDispatch, useAppSelector } from '../../app/hooks'
+import styles from './Counter.module.css'
 import {
   decrement,
   increment,
@@ -10,13 +10,13 @@ import {
   incrementIfOdd,
   selectCount,
   selectStatus,
-} from "./counterSlice"
+} from './counterSlice'
 
 export const Counter = () => {
   const dispatch = useAppDispatch()
   const count = useAppSelector(selectCount)
   const status = useAppSelector(selectStatus)
-  const [incrementAmount, setIncrementAmount] = useState("2")
+  const [incrementAmount, setIncrementAmount] = useState('2')
 
   const incrementValue = Number(incrementAmount) || 0
 
@@ -25,17 +25,17 @@ export const Counter = () => {
       <div className={styles.row}>
         <button
           className={styles.button}
-          aria-label="Decrement value"
+          aria-label='Decrement value'
           onClick={() => dispatch(decrement())}
         >
           -
         </button>
-        <span aria-label="Count" className={styles.value}>
+        <span aria-label='Count' className={styles.value}>
           {count}
         </span>
         <button
           className={styles.button}
-          aria-label="Increment value"
+          aria-label='Increment value'
           onClick={() => dispatch(increment())}
         >
           +
@@ -44,9 +44,9 @@ export const Counter = () => {
       <div className={styles.row}>
         <input
           className={styles.textbox}
-          aria-label="Set increment amount"
+          aria-label='Set increment amount'
           value={incrementAmount}
-          type="number"
+          type='number'
           onChange={e => {
             setIncrementAmount(e.target.value)
           }}
@@ -59,7 +59,7 @@ export const Counter = () => {
         </button>
         <button
           className={styles.asyncButton}
-          disabled={status !== "idle"}
+          disabled={status !== 'idle'}
           onClick={() => dispatch(incrementAsync(incrementValue))}
         >
           Add Async
