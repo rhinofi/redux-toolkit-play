@@ -13,6 +13,23 @@ import { defaultTestImpl as quotesTestImpl } from '../services/QuotesApiTest'
 import { defaultTestImpl as userTestImpl } from '../services/UserApiTest'
 import { quotesApiSlice } from '../features/quotes/quotesApiSlice'
 import { AppLayerTest } from '../services/AppLayerTest'
+import { AppServiceTagsTypes } from '../services/AppLayerLive'
+
+type MockMapElem<
+  T extends Context.Tag<any, any> | Context.TagClassShape<any, any>,
+> = T extends T ? {
+    tag: T
+    defaultImpl: Context.Tag.Service<T>
+  }
+  : never
+
+type MockMapElems = MockMapElem<AppServiceTagsTypes>
+
+type TagClassId<T extends Context.TagClass<any, any, any>> = T extends
+  Context.TagClass<any, infer Id, any> ? Id : never
+
+// Assuming all app services use class based tags.
+export type ServiceKey = TagClassId<AppServiceTagsTypes>
 
 // Map of service tags to their implementations
 export const serviceMap = {
@@ -24,9 +41,9 @@ export const serviceMap = {
     tag: UserApi,
     defaultImpl: userTestImpl
   }
-} as const;
+// TODO: can we enforce key matching { tag, impl }?
+} as const satisfies Record<ServiceKey, MockMapElems>;
 
-export type ServiceKey = keyof typeof serviceMap;
 export type Services = {
   [K in ServiceKey]?: Partial<Context.Tag.Service<(typeof serviceMap)[K]['tag']>>
 }
@@ -43,7 +60,7 @@ export const createTestRuntime = (mocks?: Services) => {
     return Layer.provide(mergedMocks, AppLayerTest);
   }
   return ManagedRuntime.make(mockedLayer());
-}; 
+};
 
 interface RenderOptions {
   preloadedState?: Partial<RootState>
