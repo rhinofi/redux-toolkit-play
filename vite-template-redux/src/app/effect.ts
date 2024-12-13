@@ -1,11 +1,7 @@
 import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { BaseQueryApi } from '@reduxjs/toolkit/query';
-import type { Context } from 'effect';
-import { Effect, Either } from 'effect';
+import { Context, Effect, Either, ManagedRuntime } from 'effect';
 import type { ThunkExtraArgument } from '../app/store';
-
-// Helper type that extracts the success type from an Effect
-type ExtractSuccessType<T> = T extends Effect.Effect<infer A, any, any> ? A : never;
 
 // Helper type that extracts method names (as strings) from a service interface
 type MethodKeys<T> = {
@@ -17,9 +13,14 @@ type ExtractErrorTypes<S> = {
   [K in keyof S]: S[K] extends (...args: any[]) => Effect.Effect<any, infer E, any> ? E : never;
 }[keyof S];
 
+export class ReduxState extends Context.Tag("ReduxState")<
+  ReduxState,
+  unknown
+>() {}
+
 // Main function that creates an RTK Query API from an Effect Layer
 export const createApiFromEffectLayer = <
-  S, 
+  S /* extends ManagedRuntime.ManagedRuntime.Context<ThunkExtraArgument['runtime']> */, 
   SI extends { [K in keyof SI]: (...args: any[]) => Effect.Effect<any, any, any> }
 >(
   // Takes a service tag (Context.Tag) and configuration options
@@ -46,9 +47,12 @@ export const createApiFromEffectLayer = <
       const effect = Effect.gen(function* () {
         const service = yield* serviceTag;
         return yield* service[methodKey](args);
-      }).pipe(Effect.either);
+      }).pipe(
+        Effect.provideService(ReduxState, api.getState()),
+        Effect.either
+      );
       const { extra } = api as { extra: ThunkExtraArgument };
-      const resultEither = await extra.runtime.runPromise(effect);
+      const resultEither = await extra.runtime.runPromise(effect, { signal: api.signal });
       if (Either.isLeft(resultEither)) {
         return { error: resultEither.left as ErrorType };
       }
@@ -62,7 +66,7 @@ export const createApiFromEffectLayer = <
     // Define the shape of our endpoints using TypeScript generics
     endpoints: (builder): {
       [K in MethodKeys<SI>]: ReturnType<typeof builder.query<
-        ExtractSuccessType<ReturnType<SI[K]>>,  // Success type from Effect
+        Effect.Effect.Success<ReturnType<SI[K]>>,  // Success type from Effect
         Parameters<SI[K]>[0]                     // Input parameters type
       >>
     } => {
@@ -81,14 +85,14 @@ export const createApiFromEffectLayer = <
         // Create either a query or mutation endpoint based on config.type
         if (config.type === 'query') {
           endpoints[methodKey] = builder.query<
-            ExtractSuccessType<ReturnType<typeof method>>,  // Success type
+            Effect.Effect.Success<ReturnType<typeof method>>,  // Success type
             Parameters<typeof method>[0]                    // Input type
           >({
             queryFn: createQueryFn(methodKey),
           });
         } else if (config.type === 'mutation') {
           endpoints[methodKey] = builder.mutation<
-            ExtractSuccessType<ReturnType<typeof method>>,  // Success type
+            Effect.Effect.Success<ReturnType<typeof method>>,  // Success type
             Parameters<typeof method>[0]                    // Input type
           >({
             queryFn: createQueryFn(methodKey),
