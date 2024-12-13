@@ -8,8 +8,8 @@ import { serializeSuccess, TaggedError } from 'effect/Schema'
 import { createAppSlice } from '../../app/createAppSlice'
 import type { AppThunk, ThunkExtraArgument } from '../../app/store'
 import { fetchCount } from './counterAPI'
-import type { RuntimeServices } from '../../app/store'
 import { Either } from 'effect'
+import { RuntimeServices } from '../../services/AppLayerLive'
 export interface CounterSliceState {
   value: number
   status: 'idle' | 'loading' | 'failed'

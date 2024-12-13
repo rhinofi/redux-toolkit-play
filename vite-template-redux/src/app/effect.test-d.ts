@@ -1,5 +1,5 @@
 import { describe, it, expect, expectTypeOf } from 'vitest';
-import { createApiFromEffectLayer } from './effect';
+import { createApiFromEffectLayerFactory } from './effect';
 import { Context, Effect } from 'effect';
 import { skipToken } from '@reduxjs/toolkit/query';
 
@@ -11,6 +11,8 @@ class TestService extends Context.Tag("TestService")<
     updateData: (input: { id: string; value: string }) => Effect.Effect<boolean, Error, never>;
   }
 >() {}
+
+const createApiFromEffectLayer = createApiFromEffectLayerFactory<TestService>()
 
 describe('createApiFromEffectLayer hooks', () => {
   it('creates hooks with correct types', () => {

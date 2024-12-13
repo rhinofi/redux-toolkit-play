@@ -18,8 +18,6 @@ export const rootReducer = combineReducers({
 // Create a managed runtime with our services
 const runtime = ManagedRuntime.make(AppLayerLive);
 
-export type RuntimeServices = Layer.Layer.Success<typeof AppLayerLive>;
-
 export type ThunkExtraArgument = {
   runtime: typeof runtime;
 };

@@ -7,5 +7,6 @@ import { QuotesApi } from './QuotesApi';
 
 export const AppServiceTags = [QuotesApi, UserApi] as const
 export type AppServiceTagsTypes = typeof AppServiceTags[number]
+export type RuntimeServices = Context.Tag.Identifier<AppServiceTagsTypes>
 
-export const AppLayerLive: Layer.Layer<Context.Tag.Identifier<AppServiceTagsTypes>> = Layer.merge(UserApiLive, QuotesApiLive);
+export const AppLayerLive: Layer.Layer<RuntimeServices> = Layer.merge(UserApiLive, QuotesApiLive);

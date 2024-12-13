@@ -2,6 +2,7 @@ import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { BaseQueryApi } from '@reduxjs/toolkit/query';
 import { Context, Effect, Either, ManagedRuntime } from 'effect';
 import type { ThunkExtraArgument } from '../app/store';
+import { RuntimeServices } from '../services/AppLayerLive';
 
 // Helper type that extracts method names (as strings) from a service interface
 type MethodKeys<T> = {
@@ -19,9 +20,9 @@ export class ReduxState extends Context.Tag("ReduxState")<
 >() {}
 
 // Main function that creates an RTK Query API from an Effect Layer
-export const createApiFromEffectLayer = <
-  S /* extends ManagedRuntime.ManagedRuntime.Context<ThunkExtraArgument['runtime']> */, 
-  SI extends { [K in keyof SI]: (...args: any[]) => Effect.Effect<any, any, any> }
+export const createApiFromEffectLayerFactory = <Services, RuntimeCreationError = never>() => <
+  S extends Services,
+  SI extends { [K in keyof SI]: (...args: any[]) => Effect.Effect<any, any, Services | ReduxState> }
 >(
   // Takes a service tag (Context.Tag) and configuration options
   serviceTag: Context.Tag<S, SI>,
@@ -34,9 +35,10 @@ export const createApiFromEffectLayer = <
       providesTags?: string[];
       invalidatesTags?: string[];
     };
-  } 
+  }
 ) => {
   type ErrorType = ExtractErrorTypes<SI>;
+  type Runtime = ManagedRuntime.ManagedRuntime<Services, RuntimeCreationError>
 
   // Helper function to create a queryFn for RTK Query endpoints
   const createQueryFn = (methodKey: keyof SI) => {
@@ -51,7 +53,7 @@ export const createApiFromEffectLayer = <
         Effect.provideService(ReduxState, api.getState()),
         Effect.either
       );
-      const { extra } = api as { extra: ThunkExtraArgument };
+      const { extra } = api as { extra: { runtime: Runtime} };
       const resultEither = await extra.runtime.runPromise(effect, { signal: api.signal });
       if (Either.isLeft(resultEither)) {
         return { error: resultEither.left as ErrorType };
@@ -101,7 +103,7 @@ export const createApiFromEffectLayer = <
           throw new Error(`Invalid method type: ${config.type}`);
         }
       });
-      
+
       // Return the populated endpoints object
       return endpoints as any;
     },
@@ -109,3 +111,6 @@ export const createApiFromEffectLayer = <
 
   return api;
 };
+
+// TODO: move this to app/store ?
+export const createApiFromEffectLayer = createApiFromEffectLayerFactory<RuntimeServices>()
