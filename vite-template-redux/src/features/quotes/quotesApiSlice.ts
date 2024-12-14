@@ -1,11 +1,11 @@
-import { createApiFromEffectLayer } from '../../app/effect';
-import { QuotesApi } from '../../services/QuotesApi';
+import { createApiFromEffectTag } from '../../app/effect'
+import { QuotesApi } from '../../services/QuotesApi'
 
-export const quotesApiSlice = createApiFromEffectLayer(QuotesApi, {
+export const quotesApiSlice = createApiFromEffectTag(QuotesApi, {
   reducerPath: 'quotesApi',
   getQuotes: {
     type: 'query',
   },
-});
+})
 
-export const { useGetQuotesQuery } = quotesApiSlice;
+export const { useGetQuotesQuery } = quotesApiSlice
