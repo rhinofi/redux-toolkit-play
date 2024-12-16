@@ -4,12 +4,12 @@ import {
   SerializedError,
 } from '@reduxjs/toolkit'
 import { Effect, pipe, Schema } from 'effect'
+import { Either } from 'effect'
 import { serializeSuccess, TaggedError } from 'effect/Schema'
 import { createAppSlice } from '../../app/createAppSlice'
 import type { AppThunk, ThunkExtraArgument } from '../../app/store'
-import { fetchCount } from './counterAPI'
-import { Either } from 'effect'
 import { RuntimeServices } from '../../services/AppLayerLive'
+import { fetchCount } from './counterAPI'
 export interface CounterSliceState {
   value: number
   status: 'idle' | 'loading' | 'failed'
@@ -56,28 +56,28 @@ export const fetchUserById = createAsyncThunk<User, number, {
 
 const createEffectThunk = <Arg, A, E, R extends RuntimeServices>(
   typePrefix: string,
-  effect: (arg: Arg) => Effect.Effect<A, E, R>
+  effect: (arg: Arg) => Effect.Effect<A, E, R>,
 ) => {
   return createAsyncThunk<A, Arg, { rejectValue: E }>(
     typePrefix,
     async (arg: Arg, thunkAPI) => {
-      const { extra } = thunkAPI as { extra: ThunkExtraArgument };
-      const { runtime } = extra;
+      const { extra } = thunkAPI as { extra: ThunkExtraArgument }
+      const { runtime } = extra
       const result = await runtime.runPromise(
-        effect(arg).pipe(Effect.either)
-      );
+        effect(arg).pipe(Effect.either),
+      )
 
       return Either.isLeft(result)
         ? thunkAPI.rejectWithValue(result.left)
-        : result.right;
-    }
-  );
+        : result.right
+    },
+  )
 }
 
 const fetchUserById2 = createEffectThunk(
   'users',
-  fetchUserByIdEffect
-);
+  fetchUserByIdEffect,
+)
 
 // If you are not using async thunks you can use the standalone `createSlice`.
 export const counterSlice = createAppSlice({

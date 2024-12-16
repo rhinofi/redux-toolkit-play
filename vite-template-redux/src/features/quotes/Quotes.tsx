@@ -12,7 +12,7 @@ export const Quotes = () => {
   )
 
   if (isError) {
-    console.log("error",error)
+    console.log('error', error)
     return (
       <div>
         <h1>There was an error!!!</h1>
