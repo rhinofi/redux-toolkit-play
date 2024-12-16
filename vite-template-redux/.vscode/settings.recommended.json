@@ -1,0 +1,12 @@
+{
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "cmd": "dprint-fmt-one-file ${file}",
+        "isAsync": false,
+        "match": "\\.(t|j)sx?$",
+        "notMatch": "dvf-portal"
+      }
+    ]
+  }
+}
