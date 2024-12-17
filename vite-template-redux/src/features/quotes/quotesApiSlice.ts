@@ -1,4 +1,5 @@
-import { createApiFromEffectTag, DefinitionType } from '../../app/effect'
+import { createApiFromEffectTag } from '../../app/createApiFromEffectTag'
+import { DefinitionType } from '../../app/effect'
 import { QuotesApi } from '../../services/QuotesApi'
 // import { DefinitionType } from '@reduxjs/toolkit/query/react'
 

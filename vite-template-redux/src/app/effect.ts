@@ -6,7 +6,6 @@ import type {
   BaseQueryMeta,
   BaseQueryResult,
   CreateApiOptions,
-  // DefinitionType,
   MutationExtraOptions,
   QueryExtraOptions,
   QueryReturnValue,
@@ -14,7 +13,6 @@ import type {
 import { _NEVER, createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react'
 import { Context, Effect, Either, ManagedRuntime } from 'effect'
 import type { DistributiveOmit } from 'react-redux'
-import { RuntimeServices } from '../services/AppLayerLive'
 
 /* Copied from RTK Query (@reduxjs/toolkit/query/index.d.ts) */
 type IsAny<T, True, False = never> = true | false extends
@@ -88,6 +86,13 @@ type MutationDefinitionQueryFn<
   & BaseEndpointDefinitionWithQueryFn<QueryArg, BaseQuery, ResultType>
   & MutationExtraOptions<TagTypes, ResultType, QueryArg, BaseQuery, ReducerPath>
 
+type FakeBaseQuery<ErrorType> = BaseQueryFn<void, typeof _NEVER, ErrorType, {}>
+
+export enum DefinitionType {
+  query = 'query',
+  mutation = 'mutation',
+}
+
 // Helper type that extracts method names (as strings) from a service interface
 type MethodKeys<T> = {
   [K in keyof T]: T[K] extends (...args: any[]) => any
@@ -105,13 +110,6 @@ export class ReduxState extends Context.Tag('ReduxState')<
   ReduxState,
   unknown
 >() {}
-
-type FakeBaseQuery<ErrorType> = BaseQueryFn<void, typeof _NEVER, ErrorType, {}>
-
-export enum DefinitionType {
-  query = 'query',
-  mutation = 'mutation',
-}
 
 // Main function that creates an RTK Query API from an Effect Layer
 export const createApiFromEffectTagFactory =
@@ -220,7 +218,6 @@ export const createApiFromEffectTagFactory =
         // Get all method keys from options, excluding 'reducerPath'
         const methodKeys = Object.keys(endpointConfigs) as Array<MethodKeys<SI>>
 
-        // Struct.keys
         // Iterate through each method to create corresponding endpoints
         methodKeys.forEach(methodKey => {
           type ResultType = Effect.Effect.Success<ReturnType<typeof method>>
@@ -235,12 +232,9 @@ export const createApiFromEffectTagFactory =
           // Create either a query or mutation endpoint based on config.type
           if (config.type === 'query') {
             endpoints[methodKey] = builder.query<ResultType, QueryType>({
-              // we can simply do this since
-              // ...config,
               ...(config.forceRefetch !== undefined
                 ? { extraOptions: config.forceRefetch }
                 : {}),
-              // ...(config.invalidatesTags !== undefined ? { extraOptions: config.invalidatesTags } : {}),
               ...(config.keepUnusedDataFor !== undefined
                 ? { extraOptions: config.keepUnusedDataFor }
                 : {}),
@@ -263,27 +257,19 @@ export const createApiFromEffectTagFactory =
               ...(config.extraOptions != null
                 ? { extraOptions: config.extraOptions }
                 : {}),
-              // ...(config.transformResponse !== undefined ? { extraOptions: config.transformResponse } : {}),
-              // ...(config.transformErrorResponse !== undefined ? { extraOptions: config.transformErrorResponse } : {}),
-              // ...(config.query !== undefined ? { query: config.query } : {}),
               queryFn: createQueryFn(methodKey),
             })
           } else if (config.type === 'mutation') {
             endpoints[methodKey] = builder.mutation<ResultType, QueryType>({
-              // ...(config.forceRefetch !== undefined ? { extraOptions: config.forceRefetch } : {}),
               ...(config.invalidatesTags !== undefined
                 ? { extraOptions: config.invalidatesTags }
                 : {}),
-              // ...(config.keepUnusedDataFor !== undefined ? { extraOptions: config.keepUnusedDataFor } : {}),
-              // ...(config.merge !== undefined ? { merge: config.merge } : {}),
               ...(config.onCacheEntryAdded !== undefined
                 ? { extraOptions: config.onCacheEntryAdded }
                 : {}),
               ...(config.onQueryStarted !== undefined
                 ? { extraOptions: config.onQueryStarted }
                 : {}),
-              // ...(config.providesTags !== undefined ? { extraOptions: config.providesTags } : {}),
-              // ...(config.serializeQueryArgs !== undefined ? { extraOptions: config.serializeQueryArgs } : {}),
               ...(config.structuralSharing !== undefined
                 ? { extraOptions: config.structuralSharing }
                 : {}),
@@ -296,7 +282,6 @@ export const createApiFromEffectTagFactory =
               ...(config.transformErrorResponse !== undefined
                 ? { extraOptions: config.transformErrorResponse }
                 : {}),
-              // ...(config.query !== undefined ? { query: config.query } : {}),
               queryFn: createQueryFn(methodKey),
             })
           } else {
@@ -311,8 +296,3 @@ export const createApiFromEffectTagFactory =
 
     return api
   }
-
-// TODO: move this to app/store ?
-export const createApiFromEffectTag = createApiFromEffectTagFactory<
-  RuntimeServices
->()
