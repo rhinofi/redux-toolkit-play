@@ -1,11 +1,19 @@
-import { createApiFromEffectTag } from '../../app/effect'
+import { createApiFromEffectTag, DefinitionType } from '../../app/effect'
 import { QuotesApi } from '../../services/QuotesApi'
+// import { DefinitionType } from '@reduxjs/toolkit/query/react'
 
 export const quotesApiSlice = createApiFromEffectTag(QuotesApi, {
-  reducerPath: 'quotesApi',
+  reducerPath: 'quotesApi' as const,
+}, {
+  addQuote: {
+    type: DefinitionType.mutation,
+  },
   getQuotes: {
-    type: 'query',
+    type: DefinitionType.query,
   },
 })
 
-export const { useGetQuotesQuery } = quotesApiSlice
+export const {
+  useGetQuotesQuery,
+  useAddQuoteMutation,
+} = quotesApiSlice

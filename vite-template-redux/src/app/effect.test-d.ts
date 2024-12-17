@@ -1,4 +1,4 @@
-import { skipToken } from '@reduxjs/toolkit/query'
+import { DefinitionType, skipToken } from '@reduxjs/toolkit/query'
 import { Context, Effect } from 'effect'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { createApiFromEffectTagFactory } from './effect'
@@ -20,11 +20,12 @@ describe('createApiFromEffectTag hooks', () => {
   it('creates hooks with correct types', () => {
     const api = createApiFromEffectTag(TestService, {
       reducerPath: 'testApi',
-      getData: { type: 'query' },
-      updateData: { type: 'mutation' },
+    }, {
+      getData: { type: DefinitionType.query as const },
+      updateData: { type: DefinitionType.mutation as const },
     })
 
-    const { useGetDataQuery, useUpdateDataQuery } = api
+    const { useGetDataQuery, useUpdateDataMutation } = api
 
     type GetDataParameterType = Parameters<typeof useGetDataQuery>[0]
     type GetDataReturnType = ReturnType<typeof useGetDataQuery>
@@ -37,15 +38,44 @@ describe('createApiFromEffectTag hooks', () => {
     expectTypeOf<GetDataDataType>().toMatchTypeOf<string | undefined>()
     expectTypeOf<GetDataErrorType>().toMatchTypeOf<Error | undefined>()
 
-    type UpdateDataParameterType = Parameters<typeof useUpdateDataQuery>[0]
-    type UpdateDataReturnType = ReturnType<typeof useUpdateDataQuery>
-    type UpdateDataDataType = UpdateDataReturnType['data']
-    type UpdateDataErrorType = UpdateDataReturnType['error']
+    /**
+     * We expect the useUpdateDataMutation hook to return a tuple
+     * with the following types: [
+     *   ({ id: string; value: string }) => Promise<>, {
+     *     status: 'pending' | 'fulfilled' | 'rejected';
+     *     data: boolean | undefined;
+     *     error: Error | undefined;
+     *   }
+     * ]
+     */
+    type UpdateDataReturnType = ReturnType<typeof useUpdateDataMutation>
 
-    expectTypeOf<UpdateDataParameterType>().toMatchTypeOf<
-      { id: string; value: string } | typeof skipToken
+    // Test the mutation trigger function type
+    type MutationTrigger = UpdateDataReturnType[0]
+    expectTypeOf<Parameters<MutationTrigger>[0]>().toEqualTypeOf<{
+      id: string
+      value: string
+    }>()
+    expectTypeOf<Awaited<ReturnType<MutationTrigger>>>().toEqualTypeOf<
+      {
+        data: boolean
+        error?: undefined
+      } | {
+        data?: undefined
+        error: any
+      }
     >()
-    expectTypeOf<UpdateDataDataType>().toMatchTypeOf<boolean | undefined>()
-    expectTypeOf<UpdateDataErrorType>().toMatchTypeOf<Error | undefined>()
+
+    // Test the mutation result type
+    type MutationResult = UpdateDataReturnType[1]
+    expectTypeOf<MutationResult>().toMatchTypeOf<
+      Record<string, any> & {
+        originalArgs?: {
+          id: string
+          value: string
+        } | undefined
+        reset: () => void
+      }
+    >()
   })
 })

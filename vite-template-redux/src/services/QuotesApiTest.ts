@@ -1,9 +1,15 @@
 // src/services/QuotesApiTest.ts
 import { Effect, Layer } from 'effect'
-import { QuotesApi, type QuotesApiService } from './QuotesApi'
+import { type Quote, QuotesApi, type QuotesApiService } from './QuotesApi'
 
 // Default test implementation
 export const defaultTestImpl: QuotesApiService = {
+  addQuote: (quote: Quote) =>
+    Effect.succeed({
+      ...quote,
+      id: Math.floor(Math.random() * 1000), // Generate a random ID for testing
+    }),
+
   getQuotes: (limit: number) =>
     Effect.succeed({
       quotes: Array.from({ length: limit }, (_, idx) => ({

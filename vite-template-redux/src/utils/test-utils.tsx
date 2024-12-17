@@ -6,7 +6,7 @@ import { Layer, ManagedRuntime } from 'effect'
 import type React from 'react'
 import { Provider } from 'react-redux'
 import type { RootState } from '../app/store'
-import { rootReducer } from '../app/store' // You'll need to export this
+import { rootReducer } from '../app/store'
 import { quotesApiSlice } from '../features/quotes/quotesApiSlice'
 import { AppServiceTagsTypes } from '../services/AppLayerLive'
 import { AppLayerTest } from '../services/AppLayerTest'
@@ -18,9 +18,9 @@ import { defaultTestImpl as userTestImpl } from '../services/UserApiTest'
 type MockMapElem<
   T extends Context.Tag<any, any> | Context.TagClassShape<any, any>,
 > = T extends T ? {
-    tag: T
-    defaultImpl: Context.Tag.Service<T>
-  }
+  tag: T
+  defaultImpl: Context.Tag.Service<T>
+}
   : never
 
 type MockMapElems = MockMapElem<AppServiceTagsTypes>
@@ -41,6 +41,7 @@ export const serviceMap = {
     tag: UserApi,
     defaultImpl: userTestImpl,
   },
+
   // TODO: can we enforce key matching { tag, impl }?
 } as const satisfies Record<ServiceKey, MockMapElems>
 

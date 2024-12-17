@@ -16,6 +16,7 @@ export interface QuotesApiResponse {
 }
 
 export interface QuotesApiService {
+  addQuote(quote: Quote): Effect.Effect<Quote, Error>
   getQuotes(limit: number): Effect.Effect<QuotesApiResponse, Error>
 }
 
