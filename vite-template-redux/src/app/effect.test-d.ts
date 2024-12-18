@@ -1,3 +1,4 @@
+import { SerializedError } from '@reduxjs/toolkit'
 import { DefinitionType, skipToken } from '@reduxjs/toolkit/query'
 import { Context, Effect } from 'effect'
 import { describe, expect, expectTypeOf, it } from 'vitest'
@@ -62,7 +63,7 @@ describe('createApiFromEffectTag hooks', () => {
         error?: undefined
       } | {
         data?: undefined
-        error: any
+        error: Error | SerializedError
       }
     >()
 
