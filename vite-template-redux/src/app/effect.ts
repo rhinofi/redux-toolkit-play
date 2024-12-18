@@ -101,6 +101,15 @@ export class ReduxState extends Context.Tag('ReduxState')<
   unknown
 >() {}
 
+function restrictToTupleKeys<T extends string>() {
+  // The type is now a Record with keys exactly from the tuple, but each key is optional
+  return <U extends { [K in keyof U]: K extends T ? number : never }>(
+    obj: U & Partial<Record<T, number>>,
+  ): U => {
+    return obj
+  }
+}
+
 // Main function that creates an RTK Query API from an Effect Layer
 export const createApiFromEffectTagFactory =
   <Services, RuntimeCreationError = never>() =>
@@ -115,23 +124,24 @@ export const createApiFromEffectTagFactory =
     ErrorType extends ExtractErrorTypes<SI>,
     TagTypes extends string,
     EndpointDefs extends {
-      [K in MethodKeys<SI>]: DistributiveOmit<
-        | QueryDefinitionWithQueryFn<
-          Parameters<SI[K]>[0],
-          FakeBaseQuery<ErrorType>,
-          TagTypes,
-          Effect.Effect.Success<ReturnType<SI[K]>>,
-          ReducerPath
+      [K in keyof EndpointDefs]: K extends MethodKeys<SI> ? DistributiveOmit<
+          | QueryDefinitionWithQueryFn<
+            Parameters<SI[K]>[0],
+            FakeBaseQuery<ErrorType>,
+            TagTypes,
+            Effect.Effect.Success<ReturnType<SI[K]>>,
+            ReducerPath
+          >
+          | MutationDefinitionQueryFn<
+            Parameters<SI[K]>[0],
+            FakeBaseQuery<ErrorType>,
+            TagTypes,
+            Effect.Effect.Success<ReturnType<SI[K]>>,
+            ReducerPath
+          >,
+          'queryFn'
         >
-        | MutationDefinitionQueryFn<
-          Parameters<SI[K]>[0],
-          FakeBaseQuery<ErrorType>,
-          TagTypes,
-          Effect.Effect.Success<ReturnType<SI[K]>>,
-          ReducerPath
-        >,
-        'queryFn'
-      >
+        : never
     },
   >(
     // Takes a service tag (Context.Tag) and configuration options
@@ -174,42 +184,42 @@ export const createApiFromEffectTagFactory =
       }
     }
 
+    type EndpointKeys = Extract<keyof EndpointDefs, MethodKeys<SI>>
+    type Endpoints = {
+      [K in EndpointKeys]: EndpointDefs[K]['type'] extends DefinitionType.query
+        ? QueryDefinitionWithQueryFn<
+          Parameters<SI[K]>[0],
+          FakeBaseQuery<ErrorType>,
+          TagTypes,
+          Effect.Effect.Success<ReturnType<SI[K]>>,
+          ReducerPath
+        >
+        : MutationDefinitionQueryFn<
+          Parameters<SI[K]>[0],
+          FakeBaseQuery<ErrorType>,
+          TagTypes,
+          Effect.Effect.Success<ReturnType<SI[K]>>,
+          ReducerPath
+        >
+    }
     const api = createApi({
       ...createApiOptions,
       baseQuery: fakeBaseQuery<ErrorType>(),
       // Define the shape of our endpoints using TypeScript generics
-      endpoints: (builder): {
-        [K in MethodKeys<SI>]: EndpointDefs[K]['type'] extends
-          DefinitionType.query ? QueryDefinitionWithQueryFn<
-            Parameters<SI[K]>[0],
-            FakeBaseQuery<ErrorType>,
-            TagTypes,
-            Effect.Effect.Success<ReturnType<SI[K]>>,
-            ReducerPath
-          >
-          : MutationDefinitionQueryFn<
-            Parameters<SI[K]>[0],
-            FakeBaseQuery<ErrorType>,
-            TagTypes,
-            Effect.Effect.Success<ReturnType<SI[K]>>,
-            ReducerPath
-          >
-      } => {
+      endpoints: (builder): Endpoints => {
         // Initialize empty endpoints object
-        const endpoints = {} as Record<MethodKeys<SI>, any>
+        const endpoints = {} as Record<EndpointKeys, any>
         // Get all method keys from options, excluding 'reducerPath'
-        const methodKeys = Object.keys(endpointConfigs) as Array<MethodKeys<SI>>
+        const methodKeys = Object.keys(endpointConfigs) as Array<EndpointKeys>
 
         // Iterate through each method to create corresponding endpoints
         methodKeys.forEach(methodKey => {
-          type ResultType = Effect.Effect.Success<ReturnType<typeof method>>
-          type QueryType = Parameters<typeof method>[0]
+          type Method = SI[typeof methodKey]
+          type ResultType = Effect.Effect.Success<ReturnType<Method>>
+          type QueryType = Parameters<Method>[0]
 
           // Get the configuration for this method from options
           const config = endpointConfigs[methodKey]
-
-          // Get the actual method from the service tag
-          const method = (serviceTag as any)[methodKey] as SI[typeof methodKey]
 
           // Create either a query or mutation endpoint based on config.type
           if (config.type === 'query') {
