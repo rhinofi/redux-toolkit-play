@@ -120,28 +120,27 @@ export const createApiFromEffectTagFactory =
         ...args: any[]
       ) => Effect.Effect<any, any, Services | ReduxState>
     },
-    ReducerPath extends string,
+    const ReducerPath extends string,
     ErrorType extends ExtractErrorTypes<SI>,
-    TagTypes extends string,
-    EndpointDefs extends {
-      [K in keyof EndpointDefs]: K extends MethodKeys<SI> ? DistributiveOmit<
-          | QueryDefinitionWithQueryFn<
-            Parameters<SI[K]>[0],
-            FakeBaseQuery<ErrorType>,
-            TagTypes,
-            Effect.Effect.Success<ReturnType<SI[K]>>,
-            ReducerPath
-          >
-          | MutationDefinitionQueryFn<
-            Parameters<SI[K]>[0],
-            FakeBaseQuery<ErrorType>,
-            TagTypes,
-            Effect.Effect.Success<ReturnType<SI[K]>>,
-            ReducerPath
-          >,
-          'queryFn'
+    const TagTypes extends string,
+    const EndpointDefs extends {
+      [K in MethodKeys<SI>]: DistributiveOmit<
+        | QueryDefinitionWithQueryFn<
+          Parameters<SI[K]>[0],
+          FakeBaseQuery<ErrorType>,
+          TagTypes,
+          Effect.Effect.Success<ReturnType<SI[K]>>,
+          ReducerPath
         >
-        : never
+        | MutationDefinitionQueryFn<
+          Parameters<SI[K]>[0],
+          FakeBaseQuery<ErrorType>,
+          TagTypes,
+          Effect.Effect.Success<ReturnType<SI[K]>>,
+          ReducerPath
+        >,
+        'queryFn'
+      >
     },
   >(
     // Takes a service tag (Context.Tag) and configuration options
@@ -153,7 +152,7 @@ export const createApiFromEffectTagFactory =
         CreateApiOptions<FakeBaseQuery<ErrorType>, any, ReducerPath, TagTypes>,
         'endpoints' | 'reducerPath' | 'baseQuery'
       >,
-    endpointConfigs: EndpointDefs,
+    endpointConfigs: Partial<EndpointDefs>,
   ) => {
     // type ErrorType = ExtractErrorTypes<SI>
     type Runtime = ManagedRuntime.ManagedRuntime<Services, RuntimeCreationError>
@@ -186,21 +185,25 @@ export const createApiFromEffectTagFactory =
 
     type EndpointKeys = Extract<keyof EndpointDefs, MethodKeys<SI>>
     type Endpoints = {
-      [K in EndpointKeys]: EndpointDefs[K]['type'] extends DefinitionType.query
-        ? QueryDefinitionWithQueryFn<
-          Parameters<SI[K]>[0],
-          FakeBaseQuery<ErrorType>,
-          TagTypes,
-          Effect.Effect.Success<ReturnType<SI[K]>>,
-          ReducerPath
-        >
-        : MutationDefinitionQueryFn<
-          Parameters<SI[K]>[0],
-          FakeBaseQuery<ErrorType>,
-          TagTypes,
-          Effect.Effect.Success<ReturnType<SI[K]>>,
-          ReducerPath
-        >
+      [K in EndpointKeys]: K extends MethodKeys<SI>
+        ? (EndpointDefs[K]['type'] extends DefinitionType.query
+          ? QueryDefinitionWithQueryFn<
+            Parameters<SI[K]>[0],
+            FakeBaseQuery<ErrorType>,
+            TagTypes,
+            Effect.Effect.Success<ReturnType<SI[K]>>,
+            ReducerPath
+          >
+          : EndpointDefs[K]['type'] extends DefinitionType.mutation
+            ? MutationDefinitionQueryFn<
+              Parameters<SI[K]>[0],
+              FakeBaseQuery<ErrorType>,
+              TagTypes,
+              Effect.Effect.Success<ReturnType<SI[K]>>,
+              ReducerPath
+            >
+          : never)
+        : never
     }
     const api = createApi({
       ...createApiOptions,
@@ -220,6 +223,10 @@ export const createApiFromEffectTagFactory =
 
           // Get the configuration for this method from options
           const config = endpointConfigs[methodKey]
+
+          if (config === undefined) {
+            return
+          }
 
           // Create either a query or mutation endpoint based on config.type
           if (config.type === 'query') {
