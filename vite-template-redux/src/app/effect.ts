@@ -4,7 +4,6 @@ import type {
   BaseQueryExtraOptions,
   BaseQueryFn,
   BaseQueryMeta,
-  BaseQueryResult,
   CreateApiOptions,
   MutationExtraOptions,
   QueryExtraOptions,
@@ -15,11 +14,7 @@ import { Context, Effect, Either, ManagedRuntime } from 'effect'
 import type { DistributiveOmit } from 'react-redux'
 
 /* Copied from RTK Query (@reduxjs/toolkit/query/index.d.ts) */
-type IsAny<T, True, False = never> = true | false extends
-  (T extends never ? true : false) ? True : False
-type CastAny<T, CastTo> = IsAny<T, CastTo, T>
 type MaybePromise<T> = T | PromiseLike<T>
-type NEVER = typeof _NEVER
 /* End copy from RTK Query (@reduxjs/toolkit/query/index.d.ts) */
 
 type EndpointDefinitionWithQueryFn<
@@ -48,24 +43,19 @@ type EndpointDefinitionWithQueryFn<
 declare const resultType: unique symbol
 declare const baseQuery: unique symbol
 
-type HasRequiredProps<T, True, False> = T extends Required<T> ? True : False
-
 type BaseEndpointDefinitionWithQueryFn<
   QueryArg,
   BaseQuery extends BaseQueryFn,
   ResultType,
 > =
-  & ([CastAny<BaseQueryResult<BaseQuery>, {}>] extends [NEVER] ? never
-    : EndpointDefinitionWithQueryFn<QueryArg, BaseQuery, ResultType>)
+  & EndpointDefinitionWithQueryFn<QueryArg, BaseQuery, ResultType>
   & {
     [resultType]?: ResultType
     [baseQuery]?: BaseQuery
   }
-  & HasRequiredProps<BaseQueryExtraOptions<BaseQuery>, {
-    extraOptions: BaseQueryExtraOptions<BaseQuery>
-  }, {
+  & {
     extraOptions?: BaseQueryExtraOptions<BaseQuery>
-  }>
+  }
 
 type QueryDefinitionWithQueryFn<
   QueryArg,
@@ -128,18 +118,14 @@ export const createApiFromEffectTagFactory =
       [K in MethodKeys<SI>]: DistributiveOmit<
         | QueryDefinitionWithQueryFn<
           Parameters<SI[K]>[0],
-          // TODO: why this doesn't work
-          // FakeBaseQuery<ErrorType>,
-          any,
+          FakeBaseQuery<ErrorType>,
           TagTypes,
           Effect.Effect.Success<ReturnType<SI[K]>>,
           ReducerPath
         >
         | MutationDefinitionQueryFn<
           Parameters<SI[K]>[0],
-          // TODO: why this doesn't work
-          // FakeBaseQuery<ErrorType>,
-          any,
+          FakeBaseQuery<ErrorType>,
           TagTypes,
           Effect.Effect.Success<ReturnType<SI[K]>>,
           ReducerPath
@@ -150,7 +136,7 @@ export const createApiFromEffectTagFactory =
   >(
     // Takes a service tag (Context.Tag) and configuration options
     serviceTag: Context.Tag<S, SI>,
-    // TODO: allow serializeQueryArgs
+    // allow serializeQueryArgs
     createApiOptions:
       & { reducerPath: ReducerPath }
       & Omit<
@@ -196,18 +182,14 @@ export const createApiFromEffectTagFactory =
         [K in MethodKeys<SI>]: EndpointDefs[K]['type'] extends
           DefinitionType.query ? QueryDefinitionWithQueryFn<
             Parameters<SI[K]>[0],
-            // TODO: why this doesn't work
-            // FakeBaseQuery<ErrorType>,
-            any,
+            FakeBaseQuery<ErrorType>,
             TagTypes,
             Effect.Effect.Success<ReturnType<SI[K]>>,
             ReducerPath
           >
           : MutationDefinitionQueryFn<
             Parameters<SI[K]>[0],
-            // TODO: why this doesn't work
-            // FakeBaseQuery<ErrorType>,
-            any,
+            FakeBaseQuery<ErrorType>,
             TagTypes,
             Effect.Effect.Success<ReturnType<SI[K]>>,
             ReducerPath
