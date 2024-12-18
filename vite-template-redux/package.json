@@ -15,8 +15,9 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@effect/platform": "0.71.5",
     "@reduxjs/toolkit": "^2.0.1",
-    "effect": "3.10.15",
+    "effect": "3.11.8",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-redux": "^9.1.0"
