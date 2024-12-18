@@ -16,5 +16,7 @@ export const quotesApiSlice = createApiFromEffectTag(QuotesApi, {
 
 export const {
   useGetQuotesQuery,
+  // useAddQuotesQuery,
+  // useGetQuotesMutation,
   useAddQuoteMutation,
 } = quotesApiSlice
