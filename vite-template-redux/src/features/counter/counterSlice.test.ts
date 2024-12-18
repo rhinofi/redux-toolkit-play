@@ -1,4 +1,4 @@
-import type { AppStore } from '../../app/store'
+import type { AppStore, RootState } from '../../app/store'
 import { makeStore } from '../../app/store'
 import type { CounterSliceState } from './counterSlice'
 import {
@@ -22,7 +22,7 @@ describe<LocalTestContext>('counter reducer', it => {
       status: 'idle',
     }
 
-    const store = makeStore({ counter: initialState })
+    const store = makeStore({ counter: initialState } as Partial<RootState>)
 
     context.store = store
   })
