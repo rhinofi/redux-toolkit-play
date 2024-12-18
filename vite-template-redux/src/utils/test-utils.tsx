@@ -10,6 +10,7 @@ import { rootReducer } from '../app/store'
 import { quotesApiSlice } from '../features/quotes/quotesApiSlice'
 import { AppServiceTagsTypes } from '../services/AppLayerLive'
 import { AppLayerTest } from '../services/AppLayerTest'
+import { FromHttpApiClient } from '../services/FromHttpApiClient'
 import { QuotesApi } from '../services/QuotesApi'
 import { defaultTestImpl as quotesTestImpl } from '../services/QuotesApiTest'
 import { UserApi } from '../services/UserApi'
@@ -40,6 +41,11 @@ export const serviceMap = {
   UserApi: {
     tag: UserApi,
     defaultImpl: userTestImpl,
+  },
+  FromHttpApiClient: {
+    tag: FromHttpApiClient,
+    // TODO
+    defaultImpl: {} as any,
   },
   // TODO: can we enforce key matching { tag, impl }?
 } as const satisfies Record<ServiceKey, MockMapElems>
