@@ -7,6 +7,7 @@
     "skipLibCheck": true,
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
+    "exactOptionalPropertyTypes": true,
     "strict": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
