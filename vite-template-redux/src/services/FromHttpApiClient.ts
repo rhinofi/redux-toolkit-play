@@ -7,9 +7,9 @@ import {
   HttpApiGroup,
   HttpApiSchema,
 } from '@effect/platform'
-import { DefinitionType } from '@reduxjs/toolkit/query'
 import { Context, DateTime, Effect, Layer, Schema } from 'effect'
 import { createApiFromEffectTag } from '../app/createApiFromEffectTag'
+import { DefinitionType } from '../app/effect'
 
 // here is our api definition
 class User extends Schema.Class<User>('User')({
@@ -72,4 +72,4 @@ const { useFindByIdQuery } = createApiFromEffectTag(
 )
 
 // data is a union
-const { data } = useFindByIdQuery({ path: { userId: 1 } })
+// const { data } = useFindByIdQuery({ path: { userId: 1 } })
