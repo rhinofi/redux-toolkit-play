@@ -14,6 +14,10 @@ export class UpdateDataError extends Schema.TaggedError<UpdateDataError>()(
   { message: Schema.String },
 ) {}
 
+type AllApiErrors = GetDataError | UpdateDataError
+// SerializedError is added by rtk
+type AllErrors = AllApiErrors | SerializedError
+
 // Define a sample service interface for testing
 class TestService extends Context.Tag('TestService')<
   TestService,
@@ -40,6 +44,8 @@ describe('createApiFromEffectTag hooks', () => {
 
     const { useGetDataQuery, useUpdateDataMutation } = api
 
+    const { data, error, isError } = useGetDataQuery({ id: 'userId ' })
+
     type GetDataParameterType = Parameters<typeof useGetDataQuery>[0]
     type GetDataReturnType = ReturnType<typeof useGetDataQuery>
     type GetDataDataType = GetDataReturnType['data']
@@ -48,8 +54,8 @@ describe('createApiFromEffectTag hooks', () => {
     expectTypeOf<GetDataParameterType>().toEqualTypeOf<
       { id: string } | typeof skipToken
     >()
-    expectTypeOf<GetDataDataType>().toEqualTypeOf<string | undefined>()
-    expectTypeOf<GetDataErrorType>().toEqualTypeOf<GetDataError | undefined>()
+    expectTypeOf<typeof data>().toEqualTypeOf<string | undefined>()
+    expectTypeOf<typeof error>().toEqualTypeOf<AllErrors | undefined>()
 
     /**
      * We expect the useUpdateDataMutation hook to return a tuple
@@ -81,7 +87,7 @@ describe('createApiFromEffectTag hooks', () => {
 
     // Test the mutation result type
     type MutationResult = UpdateDataReturnType[1]
-    expectTypeOf<MutationResult>().toMatchTypeOf<
+    expectTypeOf<MutationResult>().toEqualTypeOf<
       Record<string, any> & {
         originalArgs?: {
           id: string
