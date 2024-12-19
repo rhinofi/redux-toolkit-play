@@ -6,12 +6,13 @@ import { QuotesApi } from '../../services/QuotesApi'
 export const quotesApiSlice = createApiFromEffectTag(
   QuotesApi,
   {
-    reducerPath: 'quotesApi' as const,
-    tagTypes: ['a'],
+    reducerPath: 'quotesApi',
+    tagTypes: ['a', 'b'],
   },
   {
     addQuote: {
       type: DefinitionType.mutation,
+      invalidatesTags: ['a'],
     },
     getQuotes: {
       type: DefinitionType.query,
