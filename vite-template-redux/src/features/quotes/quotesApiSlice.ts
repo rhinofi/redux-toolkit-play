@@ -21,7 +21,10 @@ export const quotesApiSlice = createApiFromEffectTag(
 
 export const {
   useGetQuotesQuery,
-  useAddQuotesQuery,
-  useGetQuotesMutation,
   useAddQuoteMutation,
 } = quotesApiSlice
+
+// @ts-expect-error
+export const { useAddQuotesQuery } = quotesApiSlice
+// @ts-expect-error
+export const { useGetQuotesMutation } = quotesApiSlice

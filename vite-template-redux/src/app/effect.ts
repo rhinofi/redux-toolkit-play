@@ -110,6 +110,10 @@ function restrictToTupleKeys<T extends string>() {
   }
 }
 
+type NonNullableRecord<T extends Record<string, unknown>> = {
+  [K in keyof T]: NonNullable<T[K]>
+}
+
 // Main function that creates an RTK Query API from an Effect Layer
 export const createApiFromEffectTagFactory =
   <Services, RuntimeCreationError = never>() =>
@@ -124,23 +128,25 @@ export const createApiFromEffectTagFactory =
     ErrorType extends ExtractErrorTypes<SI>,
     const TagTypes extends string,
     const EndpointDefs extends {
-      [K in MethodKeys<SI>]: DistributiveOmit<
-        | QueryDefinitionWithQueryFn<
-          Parameters<SI[K]>[0],
-          FakeBaseQuery<ErrorType>,
-          TagTypes,
-          Effect.Effect.Success<ReturnType<SI[K]>>,
-          ReducerPath
+      [K in (keyof EndpointDefs) | MethodKeys<SI>]?: K extends MethodKeys<SI>
+        ? DistributiveOmit<
+          | QueryDefinitionWithQueryFn<
+            Parameters<SI[K]>[0],
+            FakeBaseQuery<ErrorType>,
+            TagTypes,
+            Effect.Effect.Success<ReturnType<SI[K]>>,
+            ReducerPath
+          >
+          | MutationDefinitionQueryFn<
+            Parameters<SI[K]>[0],
+            FakeBaseQuery<ErrorType>,
+            TagTypes,
+            Effect.Effect.Success<ReturnType<SI[K]>>,
+            ReducerPath
+          >,
+          'queryFn'
         >
-        | MutationDefinitionQueryFn<
-          Parameters<SI[K]>[0],
-          FakeBaseQuery<ErrorType>,
-          TagTypes,
-          Effect.Effect.Success<ReturnType<SI[K]>>,
-          ReducerPath
-        >,
-        'queryFn'
-      >
+        : never
     },
   >(
     // Takes a service tag (Context.Tag) and configuration options
@@ -152,7 +158,7 @@ export const createApiFromEffectTagFactory =
         CreateApiOptions<FakeBaseQuery<ErrorType>, any, ReducerPath, TagTypes>,
         'endpoints' | 'reducerPath' | 'baseQuery'
       >,
-    endpointConfigs: Partial<EndpointDefs>,
+    endpointConfigs: NonNullableRecord<EndpointDefs>,
   ) => {
     // type ErrorType = ExtractErrorTypes<SI>
     type Runtime = ManagedRuntime.ManagedRuntime<Services, RuntimeCreationError>
@@ -185,24 +191,22 @@ export const createApiFromEffectTagFactory =
 
     type EndpointKeys = Extract<keyof EndpointDefs, MethodKeys<SI>>
     type Endpoints = {
-      [K in EndpointKeys]: K extends MethodKeys<SI>
-        ? (EndpointDefs[K]['type'] extends DefinitionType.query
-          ? QueryDefinitionWithQueryFn<
+      [K in EndpointKeys]: EndpointDefs[K] extends
+        { type: DefinitionType.query } ? QueryDefinitionWithQueryFn<
+          Parameters<SI[K]>[0],
+          FakeBaseQuery<ErrorType>,
+          TagTypes,
+          Effect.Effect.Success<ReturnType<SI[K]>>,
+          ReducerPath
+        >
+        : EndpointDefs[K] extends { type: DefinitionType.mutation }
+          ? MutationDefinitionQueryFn<
             Parameters<SI[K]>[0],
             FakeBaseQuery<ErrorType>,
             TagTypes,
             Effect.Effect.Success<ReturnType<SI[K]>>,
             ReducerPath
           >
-          : EndpointDefs[K]['type'] extends DefinitionType.mutation
-            ? MutationDefinitionQueryFn<
-              Parameters<SI[K]>[0],
-              FakeBaseQuery<ErrorType>,
-              TagTypes,
-              Effect.Effect.Success<ReturnType<SI[K]>>,
-              ReducerPath
-            >
-          : never)
         : never
     }
     const api = createApi({
@@ -223,10 +227,6 @@ export const createApiFromEffectTagFactory =
 
           // Get the configuration for this method from options
           const config = endpointConfigs[methodKey]
-
-          if (config === undefined) {
-            return
-          }
 
           // Create either a query or mutation endpoint based on config.type
           if (config.type === 'query') {
