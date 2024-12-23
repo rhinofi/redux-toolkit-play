@@ -1,20 +1,17 @@
 // src/app/store.ts
-import { combineReducers, configureStore } from '@reduxjs/toolkit'
 import type { Action, ThunkAction } from '@reduxjs/toolkit'
+import {
+  combineReducers,
+  combineSlices,
+  configureStore,
+} from '@reduxjs/toolkit'
 import { setupListeners } from '@reduxjs/toolkit/query'
-import type { BaseQueryFn } from '@reduxjs/toolkit/query'
-import type { Layer } from 'effect'
-import { Effect, Either, ManagedRuntime } from 'effect'
+import { Effect, ManagedRuntime } from 'effect'
 import { counterSlice } from '../features/counter/counterSlice'
 import { quotesApiSlice } from '../features/quotes/quotesApiSlice'
-import { AppLayerLive, RuntimeServices } from '../services/AppLayerLive'
-import { createApiFromEffectTagFactory } from './effect'
+import { AppLayerLive } from '../services/AppLayerLive'
 
-// Combine reducers
-export const rootReducer = combineReducers({
-  counter: counterSlice.reducer,
-  [quotesApiSlice.reducerPath]: quotesApiSlice.reducer,
-})
+export const rootReducer = combineSlices(counterSlice, quotesApiSlice)
 
 // Create a managed runtime with our services
 const runtime = ManagedRuntime.make(AppLayerLive)
