@@ -1,62 +1,114 @@
-import type { RenderOptions } from '@testing-library/react'
+import { configureStore } from '@reduxjs/toolkit'
+// Fixes:
+// The inferred type of 'renderWithProviders' cannot be named without a reference to 'mode/modules/pretty-format@27.5.1/node_modules/pretty-format'. This is likely not portable. A type annotation is necessary.
+import * as ___ from '@testing-library/react'
 import { render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { PropsWithChildren, ReactElement } from 'react'
+import type { Context } from 'effect'
+import { Layer, ManagedRuntime } from 'effect'
+import type React from 'react'
 import { Provider } from 'react-redux'
-import type { AppStore, RootState } from '../app/store'
-import { makeStore } from '../app/store'
+import type { RootState } from '../app/store'
+import { rootReducer } from '../app/store'
+import { quotesApiSlice } from '../features/quotes/quotesApiSlice'
+import type { AppServiceTagsTypes } from '../services/AppLayerLive'
+import { AppLayerTest } from '../services/AppLayerTest'
+import { FromHttpApiClient } from '../services/FromHttpApiClient'
+import { QuotesApi } from '../services/QuotesApi'
+import { defaultTestImpl as quotesTestImpl } from '../services/QuotesApiTest'
+import { UserApi } from '../services/UserApi'
+import { defaultTestImpl as userTestImpl } from '../services/UserApiTest'
 
-/**
- * This type extends the default options for
- * React Testing Library's render function. It allows for
- * additional configuration such as specifying an initial Redux state and
- * a custom store instance.
- */
-interface ExtendedRenderOptions extends Omit<RenderOptions, 'queries'> {
-  /**
-   * Defines a specific portion or the entire initial state for the Redux store.
-   * This is particularly useful for initializing the state in a
-   * controlled manner during testing, allowing components to be rendered
-   * with predetermined state conditions.
-   */
-  preloadedState?: Partial<RootState>
+type MockMapElem<
+  T extends Context.Tag<any, any> | Context.TagClassShape<any, any>,
+> = T extends T ? {
+    tag: T
+    defaultImpl: Context.Tag.Service<T>
+  }
+  : never
 
-  /**
-   * Allows the use of a specific Redux store instance instead of a
-   * default or global store. This flexibility is beneficial when
-   * testing components with unique store requirements or when isolating
-   * tests from a global store state. The custom store should be configured
-   * to match the structure and middleware of the store used by the application.
-   *
-   * @default makeStore(preloadedState)
-   */
-  store?: AppStore
+type MockMapElems = MockMapElem<AppServiceTagsTypes>
+
+type TagClassId<T extends Context.TagClass<any, any, any>> = T extends
+  Context.TagClass<any, infer Id, any> ? Id : never
+
+// Assuming all app services use class based tags.
+export type ServiceKey = TagClassId<AppServiceTagsTypes>
+
+// Map of service tags to their implementations
+export const serviceMap = {
+  QuotesApi: {
+    tag: QuotesApi,
+    defaultImpl: quotesTestImpl,
+  },
+  UserApi: {
+    tag: UserApi,
+    defaultImpl: userTestImpl,
+  },
+  FromHttpApiClient: {
+    tag: FromHttpApiClient,
+    // TODO
+    defaultImpl: {} as any,
+  },
+  // TODO: can we enforce key matching { tag, impl }?
+} as const satisfies Record<ServiceKey, MockMapElems>
+
+export type Services = {
+  [K in ServiceKey]?: Partial<
+    Context.Tag.Service<(typeof serviceMap)[K]['tag']>
+  >
 }
 
-/**
- * Renders the given React element with Redux Provider and custom store.
- * This function is useful for testing components that are connected to the Redux store.
- *
- * @param ui - The React component or element to render.
- * @param extendedRenderOptions - Optional configuration options for rendering. This includes `preloadedState` for initial Redux state and `store` for a specific Redux store instance. Any additional properties are passed to React Testing Library's render function.
- * @returns An object containing the Redux store used in the render, User event API for simulating user interactions in tests, and all of React Testing Library's query functions for testing the component.
- */
-export const renderWithProviders = (
-  ui: ReactElement,
-  extendedRenderOptions: ExtendedRenderOptions = {},
-) => {
-  const {
+export const createTestRuntime = (mocks?: Services) => {
+  const mockedLayer = () => {
+    if (!mocks) return AppLayerTest
+    const mockLayers = Object.entries(mocks).map(([key, implementation]) => {
+      const service = serviceMap[key as ServiceKey]
+      const fullImpl = { ...service.defaultImpl, ...implementation }
+      return Layer.succeed(service.tag, fullImpl)
+    })
+    const mergedMocks = mockLayers.reduce((acc, layer) =>
+      Layer.merge(acc, layer)
+    )
+    return Layer.provide(mergedMocks, AppLayerTest)
+  }
+  return ManagedRuntime.make(mockedLayer())
+}
+
+interface RenderOptions {
+  preloadedState?: Partial<RootState>
+  mocks?: Services
+}
+
+export function renderWithProviders(
+  ui: React.ReactElement,
+  {
     preloadedState = {},
-    // Automatically create a store instance if no store was passed in
-    store = makeStore(preloadedState),
+    mocks,
     ...renderOptions
-  } = extendedRenderOptions
+  }: RenderOptions = {},
+) {
+  const runtime = createTestRuntime(mocks)
 
-  const Wrapper = ({ children }: PropsWithChildren) => (
-    <Provider store={store}>{children}</Provider>
-  )
+  const store = configureStore({
+    reducer: rootReducer,
+    preloadedState,
+    middleware: getDefaultMiddleware =>
+      getDefaultMiddleware({
+        thunk: {
+          extraArgument: {
+            runtime,
+          },
+        },
+        serializableCheck: false,
+      })
+        .concat(quotesApiSlice.middleware),
+  })
 
-  // Return an object with the store and all of RTL's query functions
+  function Wrapper({ children }: { children: React.ReactNode }) {
+    return <Provider store={store}>{children}</Provider>
+  }
+
   return {
     store,
     user: userEvent.setup(),

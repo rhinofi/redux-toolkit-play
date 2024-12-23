@@ -1,14 +1,10 @@
-import {
-  createAsyncThunk,
-  type PayloadAction,
-  SerializedError,
-} from '@reduxjs/toolkit'
-import { Effect, pipe, Schema } from 'effect'
-import { serializeSuccess, TaggedError } from 'effect/Schema'
+import { createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
+import { Effect, Either, pipe, Schema } from 'effect'
+import { TaggedError } from 'effect/Schema'
 import { createAppSlice } from '../../app/createAppSlice'
-import type { AppThunk } from '../../app/store'
+import type { AppThunk, ThunkExtraArgument } from '../../app/store'
+import type { RuntimeServices } from '../../services/AppLayerLive'
 import { fetchCount } from './counterAPI'
-
 export interface CounterSliceState {
   value: number
   status: 'idle' | 'loading' | 'failed'
@@ -51,6 +47,31 @@ export const fetchUserById = createAsyncThunk<User, number, {
             Schema.encodeSync(FetchUserError)(error),
           ))),
     )),
+)
+
+const createEffectThunk = <Arg, A, E, R extends RuntimeServices>(
+  typePrefix: string,
+  effect: (arg: Arg) => Effect.Effect<A, E, R>,
+) => {
+  return createAsyncThunk<A, Arg, { rejectValue: E }>(
+    typePrefix,
+    async (arg: Arg, thunkAPI) => {
+      const { extra } = thunkAPI as { extra: ThunkExtraArgument }
+      const { runtime } = extra
+      const result = await runtime.runPromise(
+        effect(arg).pipe(Effect.either),
+      )
+
+      return Either.isLeft(result)
+        ? thunkAPI.rejectWithValue(result.left)
+        : result.right
+    },
+  )
+}
+
+const fetchUserById2 = createEffectThunk(
+  'users',
+  fetchUserByIdEffect,
 )
 
 // If you are not using async thunks you can use the standalone `createSlice`.
@@ -108,6 +129,13 @@ export const counterSlice = createAppSlice({
       state.status = 'idle'
       state.value = state.value + action.payload.userId
     })
+
+    // builder.addCase(fetchUserById2.rejected, (state, action) => {
+    //   console.log('fetchUserById2.rejected', action)
+
+    //   const error = action.payload;
+    //   state.status = 'failed'
+    // })
   },
   // You can define your selectors here. These selectors receive the slice
   // state as their first argument.
