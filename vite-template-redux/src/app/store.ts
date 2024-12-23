@@ -1,10 +1,6 @@
 // src/app/store.ts
 import type { Action, ThunkAction } from '@reduxjs/toolkit'
-import {
-  combineReducers,
-  combineSlices,
-  configureStore,
-} from '@reduxjs/toolkit'
+import { combineSlices, configureStore } from '@reduxjs/toolkit'
 import { setupListeners } from '@reduxjs/toolkit/query'
 import { Effect, ManagedRuntime } from 'effect'
 import { counterSlice } from '../features/counter/counterSlice'

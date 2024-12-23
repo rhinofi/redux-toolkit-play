@@ -8,6 +8,7 @@
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
     "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
     "strict": true,
     "module": "ESNext",
     "moduleResolution": "bundler",

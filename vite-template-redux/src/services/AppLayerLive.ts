@@ -1,5 +1,5 @@
 // src/services/AppLayer.ts
-import type { Context} from 'effect';
+import type { Context } from 'effect'
 import { Layer } from 'effect'
 import { FromHttpApiClient, FromHttpApiClientLive } from './FromHttpApiClient'
 import { QuotesApi } from './QuotesApi'

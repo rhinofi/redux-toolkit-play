@@ -1,6 +1,5 @@
 // src/app/testStore.ts
-import { configureStore } from '@reduxjs/toolkit'
-import { combineReducers } from '@reduxjs/toolkit'
+import { combineReducers, configureStore } from '@reduxjs/toolkit'
 import { ManagedRuntime } from 'effect'
 import { counterSlice } from '../features/counter/counterSlice'
 import { quotesApiSlice } from '../features/quotes/quotesApiSlice'

@@ -1,7 +1,7 @@
-import { SerializedError } from '@reduxjs/toolkit'
+import type { SerializedError } from '@reduxjs/toolkit'
 import { DefinitionType, skipToken } from '@reduxjs/toolkit/query'
 import { Context, Effect, Schema } from 'effect'
-import { describe, expect, expectTypeOf, it } from 'vitest'
+import { describe, expectTypeOf, it } from 'vitest'
 import { createApiFromEffectTagFactory } from './effect'
 
 export class GetDataError extends Schema.TaggedError<GetDataError>()(

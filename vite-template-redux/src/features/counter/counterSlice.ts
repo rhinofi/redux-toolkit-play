@@ -1,14 +1,9 @@
-import {
-  createAsyncThunk,
-  type PayloadAction,
-  SerializedError,
-} from '@reduxjs/toolkit'
-import { Effect, pipe, Schema } from 'effect'
-import { Either } from 'effect'
-import { serializeSuccess, TaggedError } from 'effect/Schema'
+import { createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
+import { Effect, Either, pipe, Schema } from 'effect'
+import { TaggedError } from 'effect/Schema'
 import { createAppSlice } from '../../app/createAppSlice'
 import type { AppThunk, ThunkExtraArgument } from '../../app/store'
-import { RuntimeServices } from '../../services/AppLayerLive'
+import type { RuntimeServices } from '../../services/AppLayerLive'
 import { fetchCount } from './counterAPI'
 export interface CounterSliceState {
   value: number

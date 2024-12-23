@@ -2,8 +2,6 @@ import {
   FetchHttpClient,
   HttpApi,
   HttpApiClient,
-  HttpClient,
-  HttpClientRequest,
   HttpApiEndpoint,
   HttpApiGroup,
   HttpApiSchema,
@@ -34,7 +32,7 @@ class MyApi extends HttpApi.make('myApi').add(UsersApi) {}
 
 const make = Effect.gen(function*() {
   const client = yield* HttpApiClient.make(MyApi, {
-    baseUrl: 'http://localhost:3000'
+    baseUrl: 'http://localhost:3000',
   })
   // Check the types of the 2 results below
   const userWithResponce = yield* client.users.findById({

@@ -79,4 +79,3 @@ export const flattenHttpApiClient = <
 
     return result as FlattenedApi<T>
   })
-
