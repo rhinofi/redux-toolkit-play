@@ -9,14 +9,15 @@
     "allowSyntheticDefaultImports": true,
     "exactOptionalPropertyTypes": true,
     "verbatimModuleSyntax": true,
+    "declaration": true,
     "strict": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals"],
+    "outDir": "dist",
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]

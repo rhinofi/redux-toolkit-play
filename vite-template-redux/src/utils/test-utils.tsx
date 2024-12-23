@@ -1,4 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
+// Fixes:
+// The inferred type of 'renderWithProviders' cannot be named without a reference to 'mode/modules/pretty-format@27.5.1/node_modules/pretty-format'. This is likely not portable. A type annotation is necessary.
+import * as ___ from '@testing-library/react'
 import { render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Context } from 'effect'

@@ -59,7 +59,7 @@ type BaseEndpointDefinitionWithQueryFn<
     extraOptions?: BaseQueryExtraOptions<BaseQuery>
   }
 
-type QueryDefinitionWithQueryFn<
+export type QueryDefinitionWithQueryFn<
   QueryArg,
   BaseQuery extends BaseQueryFn,
   TagTypes extends string,
@@ -68,7 +68,8 @@ type QueryDefinitionWithQueryFn<
 > =
   & BaseEndpointDefinitionWithQueryFn<QueryArg, BaseQuery, ResultType>
   & QueryExtraOptions<TagTypes, ResultType, QueryArg, BaseQuery, ReducerPath>
-type MutationDefinitionQueryFn<
+
+export type MutationDefinitionQueryFn<
   QueryArg,
   BaseQuery extends BaseQueryFn,
   TagTypes extends string,
