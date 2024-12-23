@@ -9,8 +9,10 @@ import type {
   QueryExtraOptions,
   QueryReturnValue,
 } from '@reduxjs/toolkit/query'
-import { _NEVER, createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react'
-import { Context, Effect, Either, ManagedRuntime } from 'effect'
+import type { _NEVER} from '@reduxjs/toolkit/query/react';
+import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react'
+import type { ManagedRuntime } from 'effect';
+import { Context, Effect, Either } from 'effect'
 import type { DistributiveOmit } from 'react-redux'
 
 /* Copied from RTK Query (@reduxjs/toolkit/query/index.d.ts) */
