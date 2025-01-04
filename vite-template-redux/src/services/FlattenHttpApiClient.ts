@@ -13,6 +13,10 @@ type ExtractTupleType<T> = T extends Effect.Effect<infer S, infer E, infer R>
   ? Effect.Effect<[S extends [any, any] ? S[0] : S, HttpClientResponse], E, R>
   : never
 
+type ExtractSuccessType<T> = T extends Effect.Effect<infer S, infer E, infer R>
+  ? Effect.Effect<S extends [any, any] ? S[0] : S, E, R>
+  : never
+
 type FlattenedApi<T extends HttpApiClient.Client<any, any>> =
   UnionToIntersection<
     T extends
@@ -22,7 +26,7 @@ type FlattenedApi<T extends HttpApiClient.Client<any, any>> =
             [P in `${K}${Capitalize<N>}`]: T[K][N] extends
               (args: infer Args) => infer Return
               ? Args extends { withResponse?: any }
-                ? (args: Omit<Args, 'withResponse'>) => Return
+                ? (args: Omit<Args, 'withResponse'>) => ExtractSuccessType<Return>
               : T[K][N]
               : never
           }
