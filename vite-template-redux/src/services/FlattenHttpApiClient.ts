@@ -25,8 +25,9 @@ type FlattenedApi<T extends HttpApiClient.Client<any, any>> =
           & {
             [P in `${K}${Capitalize<N>}`]: T[K][N] extends
               (args: infer Args) => infer Return
-              ? Args extends { withResponse?: any }
-                ? (args: Omit<Args, 'withResponse'>) => ExtractSuccessType<Return>
+              ? Args extends { withResponse?: any } ? (
+                  args: Omit<Args, 'withResponse'>,
+                ) => ExtractSuccessType<Return>
               : T[K][N]
               : never
           }
