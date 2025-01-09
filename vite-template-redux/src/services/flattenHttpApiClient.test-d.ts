@@ -12,7 +12,7 @@ import type { HttpClientResponse } from '@effect/platform/HttpClientResponse'
 import { Schema } from 'effect'
 import type { Effect } from 'effect'
 import { describe, expectTypeOf, it } from 'vitest'
-import { flattenHttpApiClient } from './FlattenHttpApiClient'
+import { flattenHttpApiClient } from './flattenHttpApiClient'
 
 class User extends Schema.Class<User>('User')({
   id: Schema.Number,
@@ -36,7 +36,7 @@ class UsersApi extends HttpApiGroup.make('users').add(
 
 class MyApi extends HttpApi.make('myApi').add(UsersApi) {}
 
-describe('FlattenHttpApiClient', () => {
+describe('flattenHttpApiClient', () => {
   it('creates flattened API with correct types', () => {
     // Create API client
     const httpApiClient = HttpApiClient.make(MyApi, {

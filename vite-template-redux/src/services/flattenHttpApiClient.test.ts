@@ -11,7 +11,7 @@ import {
 import { Context, DateTime, Effect, Layer, Runtime, Schema } from 'effect'
 import { createApiFromEffectTagFactory } from '../app/createApiFromEffectTagFactory'
 import { DefinitionType } from '../app/createApiFromEffectTagFactory'
-import { flattenHttpApiClient } from './FlattenHttpApiClient'
+import { flattenHttpApiClient } from './flattenHttpApiClient'
 
 class User extends Schema.Class<User>('User')({
   id: Schema.Number,
@@ -37,7 +37,7 @@ class UsersApi extends HttpApiGroup
 
 class MyApi extends HttpApi.make('myApi').add(UsersApi) {}
 
-describe('FlattenHttpApiClient', () => {
+describe('flattenHttpApiClient', () => {
   const mockUser = new User({
     id: 1,
     name: 'John Doe',
