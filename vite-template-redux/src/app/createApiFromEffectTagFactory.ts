@@ -104,15 +104,6 @@ export class ReduxState extends Context.Tag('ReduxState')<
   unknown
 >() {}
 
-function restrictToTupleKeys<T extends string>() {
-  // The type is now a Record with keys exactly from the tuple, but each key is optional
-  return <U extends { [K in keyof U]: K extends T ? number : never }>(
-    obj: U & Partial<Record<T, number>>,
-  ): U => {
-    return obj
-  }
-}
-
 type NonNullableRecord<T extends Record<string, unknown>> = {
   [K in keyof T]: NonNullable<T[K]>
 }
