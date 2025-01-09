@@ -9,9 +9,9 @@ import {
   HttpClientResponse,
 } from '@effect/platform'
 import { Context, DateTime, Effect, Layer, Runtime, Schema } from 'effect'
-import { createApiFromEffectTagFactory } from '../app/effect'
+import { createApiFromEffectTagFactory } from '../app/createApiFromEffectTagFactory'
+import { DefinitionType } from '../app/createApiFromEffectTagFactory'
 import { flattenHttpApiClient } from './FlattenHttpApiClient'
-import { DefinitionType } from '../app/effect'
 
 class User extends Schema.Class<User>('User')({
   id: Schema.Number,
@@ -22,15 +22,18 @@ class User extends Schema.Class<User>('User')({
 // Our user id path parameter schema
 const UserIdParam = HttpApiSchema.param('userId', Schema.NumberFromString)
 
-class UsersApi extends HttpApiGroup.make('users')
+class UsersApi extends HttpApiGroup
+  .make('users')
   .add(
     HttpApiEndpoint.get('findById')`/users/${UserIdParam}`.addSuccess(User),
-  ).add(
+  )
+  .add(
     HttpApiEndpoint
       .post('update')`/users/${UserIdParam}`
       .setPayload(Schema.Struct({ name: Schema.String }))
-      .addSuccess(User)
-  ) {}
+      .addSuccess(User),
+  )
+{}
 
 class MyApi extends HttpApi.make('myApi').add(UsersApi) {}
 
@@ -146,27 +149,36 @@ describe('FlattenHttpApiClient', () => {
       Effect.map(client => {
         return {
           ...client,
-          usersFindById: (args: Parameters<typeof client.usersFindById>[0]) => Effect.succeed(mockUser),
-          usersFindByIdWithResponse: (args: Parameters<typeof client.usersFindByIdWithResponse>[0]) => Effect.succeed([mockUser, new Response()]),
-          usersUpdate: (args: Parameters<typeof client.usersUpdate>[0]) => Effect.succeed(updatedUser),
+          usersFindById: (args: Parameters<typeof client.usersFindById>[0]) =>
+            Effect.succeed(mockUser),
+          usersFindByIdWithResponse: (
+            args: Parameters<typeof client.usersFindByIdWithResponse>[0],
+          ) => Effect.succeed([mockUser, new Response()]),
+          usersUpdate: (args: Parameters<typeof client.usersUpdate>[0]) =>
+            Effect.succeed(updatedUser),
         }
       }),
     )
 
-    const program = Effect.gen(function*() {
-      const client = yield* mockedClient
+    const program = Effect
+      .gen(function*() {
+        const client = yield* mockedClient
 
-      const user = yield* client.usersFindById({ path: { userId: 1 } })
-      expect(user).toBeInstanceOf(User)
-      expect(user).toEqual(mockUser)
+        const user = yield* client.usersFindById({ path: { userId: 1 } })
+        expect(user).toBeInstanceOf(User)
+        expect(user).toEqual(mockUser)
 
-      const updatedUser = yield* client.usersUpdate({ path: { userId: 1 }, payload: { name: 'Jane Doe' } })
-      expect(updatedUser).toBeInstanceOf(User)
-      expect(updatedUser).toEqual(updatedUser)
-    }).pipe(
-      Effect.scoped,
-      Effect.provide(Layer.succeed(HttpClient.HttpClient, mockHttpClient)),
-    )
+        const updatedUser = yield* client.usersUpdate({
+          path: { userId: 1 },
+          payload: { name: 'Jane Doe' },
+        })
+        expect(updatedUser).toBeInstanceOf(User)
+        expect(updatedUser).toEqual(updatedUser)
+      })
+      .pipe(
+        Effect.scoped,
+        Effect.provide(Layer.succeed(HttpClient.HttpClient, mockHttpClient)),
+      )
 
     await Runtime.runPromise(runtime)(program)
   })

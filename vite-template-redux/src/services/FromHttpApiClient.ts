@@ -8,7 +8,7 @@ import {
 } from '@effect/platform'
 import { Context, Effect, Layer, Schema } from 'effect'
 import { createApiFromEffectTag } from '../app/createApiFromEffectTag'
-import { DefinitionType } from '../app/effect'
+import { DefinitionType } from '../app/createApiFromEffectTagFactory'
 
 // here is our api definition
 class User extends Schema.Class<User>('User')({
