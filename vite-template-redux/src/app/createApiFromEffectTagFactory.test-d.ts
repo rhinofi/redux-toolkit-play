@@ -28,6 +28,7 @@ class TestService extends Context.Tag('TestService')<
     updateData: (
       input: { id: string; value: string },
     ) => Effect.Effect<boolean, UpdateDataError, never>
+    noInput: () => Effect.Effect<boolean>
   }
 >() {}
 
@@ -40,9 +41,14 @@ describe('createApiFromEffectTag hooks', () => {
     }, {
       getData: { type: DefinitionType.query as const },
       updateData: { type: DefinitionType.mutation as const },
+      noInput: { type: DefinitionType.query as const },
     })
 
-    const { useGetDataQuery, useUpdateDataMutation } = api
+    const { useGetDataQuery, useUpdateDataMutation, useNoInputQuery } = api
+
+    expectTypeOf<Parameters<typeof useNoInputQuery>[0]>().toEqualTypeOf<
+      void | undefined | typeof skipToken
+    >()
 
     const { data, error, isError } = useGetDataQuery({ id: 'userId ' })
 

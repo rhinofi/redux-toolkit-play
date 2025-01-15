@@ -108,6 +108,11 @@ type NonNullableRecord<T extends Record<string, unknown>> = {
   [K in keyof T]: NonNullable<T[K]>
 }
 
+type UndefinedToVoid<T> = T extends undefined ? void : T
+type FirsParam<T extends (...arg: any[]) => any> = UndefinedToVoid<
+  Parameters<T>[0]
+>
+
 // Main function that creates an RTK Query API from an Effect Layer
 export const createApiFromEffectTagFactory =
   <Services, RuntimeCreationError = never>() =>
@@ -125,14 +130,14 @@ export const createApiFromEffectTagFactory =
       [K in (keyof EndpointDefs) | MethodKeys<SI>]?: K extends MethodKeys<SI>
         ? DistributiveOmit<
           | QueryDefinitionWithQueryFn<
-            Parameters<SI[K]>[0],
+            FirsParam<SI[K]>,
             FakeBaseQuery<ErrorType>,
             TagTypes,
             Effect.Effect.Success<ReturnType<SI[K]>>,
             ReducerPath
           >
           | MutationDefinitionQueryFn<
-            Parameters<SI[K]>[0],
+            FirsParam<SI[K]>,
             FakeBaseQuery<ErrorType>,
             TagTypes,
             Effect.Effect.Success<ReturnType<SI[K]>>,
@@ -187,7 +192,7 @@ export const createApiFromEffectTagFactory =
     type Endpoints = {
       [K in EndpointKeys]: EndpointDefs[K] extends
         { type: DefinitionType.query } ? QueryDefinitionWithQueryFn<
-          Parameters<SI[K]>[0],
+          FirsParam<SI[K]>,
           FakeBaseQuery<ErrorType>,
           TagTypes,
           Effect.Effect.Success<ReturnType<SI[K]>>,
@@ -195,7 +200,7 @@ export const createApiFromEffectTagFactory =
         >
         : EndpointDefs[K] extends { type: DefinitionType.mutation }
           ? MutationDefinitionQueryFn<
-            Parameters<SI[K]>[0],
+            FirsParam<SI[K]>,
             FakeBaseQuery<ErrorType>,
             TagTypes,
             Effect.Effect.Success<ReturnType<SI[K]>>,
