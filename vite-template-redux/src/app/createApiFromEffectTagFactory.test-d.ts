@@ -1,8 +1,13 @@
+// NOTE: test-d.ts file are only typed checked by vitest
+// the tests are not actually ran.
 import type { SerializedError } from '@reduxjs/toolkit'
-import { DefinitionType, skipToken } from '@reduxjs/toolkit/query'
+import { skipToken } from '@reduxjs/toolkit/query'
 import { Context, Effect, Schema } from 'effect'
 import { describe, expectTypeOf, it } from 'vitest'
-import { createApiFromEffectTagFactory } from './createApiFromEffectTagFactory'
+import {
+  createApiFromEffectTagFactory,
+  DefinitionType,
+} from './createApiFromEffectTagFactory.js'
 
 export class GetDataError extends Schema.TaggedError<GetDataError>()(
   'GetDataError',
@@ -50,12 +55,9 @@ describe('createApiFromEffectTag hooks', () => {
       void | undefined | typeof skipToken
     >()
 
-    const { data, error, isError } = useGetDataQuery({ id: 'userId ' })
+    const { data, error } = useGetDataQuery({ id: 'userId ' })
 
     type GetDataParameterType = Parameters<typeof useGetDataQuery>[0]
-    type GetDataReturnType = ReturnType<typeof useGetDataQuery>
-    type GetDataDataType = GetDataReturnType['data']
-    type GetDataErrorType = GetDataReturnType['error']
 
     expectTypeOf<GetDataParameterType>().toEqualTypeOf<
       { id: string } | typeof skipToken
