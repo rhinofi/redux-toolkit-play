@@ -1,6 +1,6 @@
-import { HttpApi } from '@effect/platform'
 import type { HttpApiError, HttpClientError } from '@effect/platform'
 import {
+  HttpApi,
   HttpApiClient,
   HttpApiEndpoint,
   HttpApiGroup,
@@ -9,10 +9,10 @@ import {
   HttpClientRequest,
 } from '@effect/platform'
 import type { HttpClientResponse } from '@effect/platform/HttpClientResponse'
-import { Schema } from 'effect'
 import type { Effect } from 'effect'
+import { Schema } from 'effect'
 import { describe, expectTypeOf, it } from 'vitest'
-import { flattenHttpApiClient } from './flattenHttpApiClient'
+import { flattenHttpApiClient } from './flattenHttpApiClient.js'
 
 class User extends Schema.Class<User>('User')({
   id: Schema.Number,
@@ -107,12 +107,12 @@ describe('flattenHttpApiClient', () => {
     >
 
     // Assert error types
-    expectTypeOf<Effect.Effect.Error<FindByIdEffect>>().toMatchTypeOf<
+    expectTypeOf<FindByIdError>().toMatchTypeOf<
       | HttpClientError.HttpClientError
       | HttpApiError.HttpApiDecodeError
       | NotFoundError
     >()
-    expectTypeOf<Effect.Effect.Error<FindByIdWithResponseEffect>>()
+    expectTypeOf<FindByIdWithResponseError>()
       .toMatchTypeOf<
         | HttpApiError.HttpApiDecodeError
         | HttpClientError.HttpClientError
@@ -154,20 +154,20 @@ describe('flattenHttpApiClient', () => {
     // Test error types
     type OtherFindAllError = Effect.Effect.Error<OtherFindAllEffect>
     type OtherFindAllWithResponseError = Effect.Effect.Error<
-      FindByIdWithResponseEffect
+      OtherFindAllWithResponseEffect
     >
 
     // Assert error types
-    expectTypeOf<Effect.Effect.Error<OtherFindAllEffect>>().toMatchTypeOf<
+    expectTypeOf<OtherFindAllError>().toMatchTypeOf<
       | HttpClientError.HttpClientError
       | HttpApiError.HttpApiDecodeError
       | OtherError
     >()
-    expectTypeOf<Effect.Effect.Error<OtherFindAllWithResponseEffect>>()
-      .toMatchTypeOf<
-        | HttpApiError.HttpApiDecodeError
-        | HttpClientError.HttpClientError
-        | OtherError
-      >()
+
+    expectTypeOf<OtherFindAllWithResponseError>().toMatchTypeOf<
+      | HttpApiError.HttpApiDecodeError
+      | HttpClientError.HttpClientError
+      | OtherError
+    >()
   })
 })
