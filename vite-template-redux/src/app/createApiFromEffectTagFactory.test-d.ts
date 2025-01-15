@@ -40,7 +40,7 @@ class TestService extends Context.Tag('TestService')<
 export class EffectService
   extends Effect.Service<EffectService>()('EffectService', {
     effect: Effect.succeed({
-      a: (): Effect.Effect<'a', 'error'> => Effect.succeed('a'),
+      a: (): Effect.Effect<'a'> => Effect.succeed('a'),
     }),
     dependencies: [],
   })
