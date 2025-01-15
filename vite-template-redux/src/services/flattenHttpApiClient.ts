@@ -17,29 +17,36 @@ type ExtractSuccessType<T> = T extends Effect.Effect<infer S, infer E, infer R>
   ? Effect.Effect<S extends [any, any] ? S[0] : S, E, R>
   : never
 
+export type TransformGroup<
+  Id extends string,
+  T extends Record<any, any>,
+> = T extends Record<infer M extends string, any> ? {
+    [N in M]:
+      & {
+        [P in `${Id}${Capitalize<N>}`]: T[N] extends
+          (args: infer Args) => infer Return
+          ? Args extends { withResponse?: any } ? (
+              args: Omit<Args, 'withResponse'>,
+            ) => ExtractSuccessType<Return>
+          : T[N]
+          : never
+      }
+      & {
+        [P in `${Id}${Capitalize<N>}WithResponse`]: T[N] extends
+          (args: infer Args) => infer Return
+          ? Args extends { withResponse?: any }
+            ? (args: Omit<Args, 'withResponse'>) => ExtractTupleType<Return>
+          : never
+          : never
+      }
+  }[M]
+  : never
+
 type FlattenedApi<T extends HttpApiClient.Client<any, any>> =
   UnionToIntersection<
-    T extends
-      Record<infer K extends string, Record<infer M extends string, any>> ? {
-        [N in M]:
-          & {
-            [P in `${K}${Capitalize<N>}`]: T[K][N] extends
-              (args: infer Args) => infer Return
-              ? Args extends { withResponse?: any } ? (
-                  args: Omit<Args, 'withResponse'>,
-                ) => ExtractSuccessType<Return>
-              : T[K][N]
-              : never
-          }
-          & {
-            [P in `${K}${Capitalize<N>}WithResponse`]: T[K][N] extends
-              (args: infer Args) => infer Return
-              ? Args extends { withResponse?: any }
-                ? (args: Omit<Args, 'withResponse'>) => ExtractTupleType<Return>
-              : never
-              : never
-          }
-      }[M]
+    T extends Record<infer K extends string, any> ? {
+        [N in K]: TransformGroup<K, T[K]>
+      }[K]
       : never
   >
 

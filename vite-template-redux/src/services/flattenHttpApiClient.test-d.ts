@@ -34,10 +34,23 @@ class UsersApi extends HttpApiGroup.make('users').add(
     .addError(NotFoundError),
 ) {}
 
+class OtherResponse extends Schema.Class<OtherResponse>('OtherResponse')({
+  prop: Schema.Number,
+}) {}
+
+class OtherPayload extends Schema.Class<OtherPayload>('OtherPayload')({
+  prop: Schema.String,
+}) {}
+
+class OtherError extends Schema.Class<OtherError>('OtherError')({
+  error: Schema.String,
+}) {}
+
 class OtherGroup extends HttpApiGroup.make('other').add(
-  HttpApiEndpoint.get('findAll')`/other/${UserIdParam}`
-    .addSuccess(User)
-    .addError(NotFoundError),
+  HttpApiEndpoint.post('findAll')`/other`
+    .setPayload(OtherPayload)
+    .addSuccess(OtherResponse)
+    .addError(OtherError),
 ) {}
 
 class MyApi extends HttpApi
@@ -64,9 +77,6 @@ describe('flattenHttpApiClient', () => {
     type FlattenedApi = Effect.Effect.Success<typeof flattened>
     type FindByIdMethod = FlattenedApi['usersFindById']
     type FindByIdWithResponseMethod = FlattenedApi['usersFindByIdWithResponse']
-
-    type OtherFindAll = FlattenedApi['otherFindAll']
-    type OtherFindAllWithResponse = FlattenedApi['otherFindAllWithResponse']
 
     // Test parameter types
     type FindByIdParams = Parameters<FindByIdMethod>[0]
@@ -104,9 +114,60 @@ describe('flattenHttpApiClient', () => {
     >()
     expectTypeOf<Effect.Effect.Error<FindByIdWithResponseEffect>>()
       .toMatchTypeOf<
-        | NotFoundError
         | HttpApiError.HttpApiDecodeError
         | HttpClientError.HttpClientError
+        | NotFoundError
+      >()
+
+    type OtherFindAllMethod = FlattenedApi['otherFindAll']
+    type OtherFindAllWithResponseMethod =
+      FlattenedApi['otherFindAllWithResponse']
+
+    // Test parameter types
+    type OtherFindAllParams = Parameters<OtherFindAllMethod>[0]
+    type OtherFindAllWithResponseParams = Parameters<
+      OtherFindAllWithResponseMethod
+    >[0]
+
+    // Assert parameter types
+    expectTypeOf<OtherFindAllParams>().toMatchTypeOf<{
+      payload: { prop: string }
+    }>()
+
+    expectTypeOf<OtherFindAllWithResponseParams>().toMatchTypeOf<{
+      payload: { prop: string }
+    }>()
+
+    // Test return types
+    type OtherFindAllEffect = ReturnType<OtherFindAllMethod>
+    type OtherFindAllWithResponseEffect = ReturnType<
+      OtherFindAllWithResponseMethod
+    >
+
+    // Assert success types
+    expectTypeOf<Effect.Effect.Success<OtherFindAllEffect>>().toEqualTypeOf<
+      OtherResponse
+    >()
+    expectTypeOf<Effect.Effect.Success<OtherFindAllWithResponseEffect>>()
+      .toEqualTypeOf<[OtherResponse, HttpClientResponse]>()
+
+    // Test error types
+    type OtherFindAllError = Effect.Effect.Error<OtherFindAllEffect>
+    type OtherFindAllWithResponseError = Effect.Effect.Error<
+      FindByIdWithResponseEffect
+    >
+
+    // Assert error types
+    expectTypeOf<Effect.Effect.Error<OtherFindAllEffect>>().toMatchTypeOf<
+      | HttpClientError.HttpClientError
+      | HttpApiError.HttpApiDecodeError
+      | OtherError
+    >()
+    expectTypeOf<Effect.Effect.Error<OtherFindAllWithResponseEffect>>()
+      .toMatchTypeOf<
+        | HttpApiError.HttpApiDecodeError
+        | HttpClientError.HttpClientError
+        | OtherError
       >()
   })
 })
