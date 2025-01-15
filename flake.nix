@@ -37,6 +37,7 @@
         devShell = pkgs.mkShell {
           packages = with pkgs; [
             nodejs_22
+            yarn
             nodePackages.pnpm
             dprint-fmt-one-file
             dprint
