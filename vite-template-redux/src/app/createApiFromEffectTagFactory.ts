@@ -119,7 +119,9 @@ export const createApiFromEffectTagFactory =
   <
     S extends Services,
     SI extends {
-      [K in keyof SI]: (
+      // needed to allow the use of Effect.Service which adds
+      // _tag: string, to Service type.
+      [K in Exclude<keyof SI, '_tag'>]: (
         ...args: any[]
       ) => Effect.Effect<any, any, Services | ReduxState>
     },

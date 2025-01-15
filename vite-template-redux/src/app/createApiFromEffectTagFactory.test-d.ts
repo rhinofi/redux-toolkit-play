@@ -37,10 +37,46 @@ class TestService extends Context.Tag('TestService')<
   }
 >() {}
 
-const createApiFromEffectTag = createApiFromEffectTagFactory<TestService>()
+export class EffectService
+  extends Effect.Service<EffectService>()('EffectService', {
+    effect: Effect.succeed({
+      a: (): Effect.Effect<'a', 'error'> => Effect.succeed('a'),
+    }),
+    dependencies: [],
+  })
+{}
+
+const createApiFromEffectTag = createApiFromEffectTagFactory<
+  TestService | EffectService
+>()
 
 describe('createApiFromEffectTag hooks', () => {
   it('creates hooks with correct types', () => {
+    const apiFromEffectService = createApiFromEffectTag(
+      EffectService,
+      {
+        reducerPath: 'apiFromEffectService',
+      },
+      {
+        a: { type: DefinitionType.query },
+      },
+    )
+    const { useAQuery } = apiFromEffectService
+
+    expectTypeOf<Parameters<typeof useAQuery>[0]>().toEqualTypeOf<
+      void | undefined | typeof skipToken
+    >()
+
+    const { data: dataA, error: errorA } = useAQuery()
+
+    expectTypeOf<typeof dataA>().toEqualTypeOf<
+      'a' | undefined
+    >()
+
+    expectTypeOf<typeof errorA>().toEqualTypeOf<
+      'error' | undefined | SerializedError
+    >()
+
     const api = createApiFromEffectTag(TestService, {
       reducerPath: 'testApi',
     }, {
