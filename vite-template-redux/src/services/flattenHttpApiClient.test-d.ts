@@ -34,7 +34,17 @@ class UsersApi extends HttpApiGroup.make('users').add(
     .addError(NotFoundError),
 ) {}
 
-class MyApi extends HttpApi.make('myApi').add(UsersApi) {}
+class OtherGroup extends HttpApiGroup.make('other').add(
+  HttpApiEndpoint.get('findAll')`/other/${UserIdParam}`
+    .addSuccess(User)
+    .addError(NotFoundError),
+) {}
+
+class MyApi extends HttpApi
+  .make('myApi')
+  .add(UsersApi)
+  .add(OtherGroup)
+{}
 
 describe('flattenHttpApiClient', () => {
   it('creates flattened API with correct types', () => {
@@ -54,6 +64,9 @@ describe('flattenHttpApiClient', () => {
     type FlattenedApi = Effect.Effect.Success<typeof flattened>
     type FindByIdMethod = FlattenedApi['usersFindById']
     type FindByIdWithResponseMethod = FlattenedApi['usersFindByIdWithResponse']
+
+    type OtherFindAll = FlattenedApi['otherFindAll']
+    type OtherFindAllWithResponse = FlattenedApi['otherFindAllWithResponse']
 
     // Test parameter types
     type FindByIdParams = Parameters<FindByIdMethod>[0]
