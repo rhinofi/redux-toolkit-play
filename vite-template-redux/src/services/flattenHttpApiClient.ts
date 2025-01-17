@@ -1,8 +1,10 @@
 import type { HttpApiClient } from '@effect/platform'
 import type { HttpClientResponse } from '@effect/platform/HttpClientResponse'
 import { Effect } from 'effect'
+import type { Simplify } from 'effect/Types'
 
 function Capitalize<S extends string>(str: S): Capitalize<S> {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return (str.charAt(0).toUpperCase() + str.slice(1)) as Capitalize<S>
 }
 
@@ -26,7 +28,7 @@ export type TransformGroup<
         [P in `${Id}${Capitalize<N>}`]: T[N] extends
           (args: infer Args) => infer Return
           ? Args extends { withResponse?: any } ? (
-              args: Omit<Args, 'withResponse'>,
+              args: Simplify<Omit<Args, 'withResponse'>>,
             ) => ExtractSuccessType<Return>
           : T[N]
           : never
@@ -34,8 +36,9 @@ export type TransformGroup<
       & {
         [P in `${Id}${Capitalize<N>}WithResponse`]: T[N] extends
           (args: infer Args) => infer Return
-          ? Args extends { withResponse?: any }
-            ? (args: Omit<Args, 'withResponse'>) => ExtractTupleType<Return>
+          ? Args extends { withResponse?: any } ? (
+              args: Simplify<Omit<Args, 'withResponse'>>,
+            ) => ExtractTupleType<Return>
           : never
           : never
       }
@@ -50,44 +53,45 @@ export type FlattenedApi<T extends HttpApiClient.Client<any, any>> =
       : never
   >
 
-export const flattenHttpApiClient = <
-  T extends HttpApiClient.Client<any, any>,
-  E,
-  R,
->(
-  client: Effect.Effect<T, E, R>,
-): Effect.Effect<FlattenedApi<T>, E, R> =>
-  Effect.gen(function*() {
-    const clientInstance = yield* client
-    const result = {} as Record<string, unknown>
+export const flattenHttpApiClient = <T extends HttpApiClient.Client<any, any>>(
+  client: T,
+): FlattenedApi<T> => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const result = {} as Record<string, unknown>
 
-    for (const [groupKey, group] of Object.entries(clientInstance)) {
-      const typedGroup = group as Record<
-        string,
-        HttpApiClient.Client.Method<any, any, any>
-      >
-      for (const [endpointKey, endpoint] of Object.entries(typedGroup)) {
-        // Regular endpoint without response - returns just the data
-        const flatKey = `${groupKey}${Capitalize(endpointKey)}`
-        const regularEndpoint = (
-          request: Omit<Parameters<typeof endpoint>[0], 'withResponse'>,
-        ) => endpoint({ ...request })
-        result[flatKey] = regularEndpoint
+  // eslint-disable-next-line functional/no-loop-statements
+  for (const [groupKey, group] of Object.entries(client)) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const typedGroup = group as Record<
+      string,
+      HttpApiClient.Client.Method<any, any, any>
+    >
+    // eslint-disable-next-line functional/no-loop-statements
+    for (const [endpointKey, endpoint] of Object.entries(typedGroup)) {
+      // Regular endpoint without response - returns just the data
+      const flatKey = `${groupKey}${Capitalize(endpointKey)}`
+      const regularEndpoint = (
+        request: Omit<Parameters<typeof endpoint>[0], 'withResponse'>,
+      ) => endpoint({ ...request })
+      // eslint-disable-next-line functional/immutable-data
+      result[flatKey] = regularEndpoint
 
-        // Endpoint with response - always returns [data, response]
-        const flatKeyWithResponse = `${groupKey}${
-          Capitalize(endpointKey)
-        }WithResponse`
-        const withResponseEndpoint = (
-          request: Omit<Parameters<typeof endpoint>[0], 'withResponse'>,
-        ) =>
-          endpoint({
-            ...request,
-            withResponse: true as const,
-          })
-        result[flatKeyWithResponse] = withResponseEndpoint
-      }
+      // Endpoint with response - always returns [data, response]
+      const flatKeyWithResponse = `${groupKey}${
+        Capitalize(endpointKey)
+      }WithResponse`
+      const withResponseEndpoint = (
+        request: Omit<Parameters<typeof endpoint>[0], 'withResponse'>,
+      ) =>
+        endpoint({
+          ...request,
+          withResponse: true as const,
+        })
+      // eslint-disable-next-line functional/immutable-data
+      result[flatKeyWithResponse] = withResponseEndpoint
     }
+  }
 
-    return result as FlattenedApi<T>
-  })
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return result as FlattenedApi<T>
+}

@@ -1,5 +1,5 @@
-import { HttpApi } from '@effect/platform'
 import {
+  HttpApi,
   HttpApiClient,
   HttpApiEndpoint,
   HttpApiGroup,
@@ -9,9 +9,13 @@ import {
   HttpClientResponse,
 } from '@effect/platform'
 import { Context, DateTime, Effect, Layer, Runtime, Schema } from 'effect'
-import { createApiFromEffectTagFactory } from '../app/createApiFromEffectTagFactory'
-import { DefinitionType } from '../app/createApiFromEffectTagFactory'
-import { flattenHttpApiClient } from './flattenHttpApiClient'
+import { describe, expect, it } from 'vitest'
+
+import {
+  createApiFromEffectTagFactory,
+  DefinitionType,
+} from '../app/createApiFromEffectTagFactory.js'
+import { flattenHttpApiClient } from './flattenHttpApiClient.js'
 
 class User extends Schema.Class<User>('User')({
   id: Schema.Number,
@@ -19,7 +23,7 @@ class User extends Schema.Class<User>('User')({
   createdAt: Schema.DateTimeUtc,
 }) {}
 
-// Our user id path parameter schema
+// User id path parameter schema
 const UserIdParam = HttpApiSchema.param('userId', Schema.NumberFromString)
 
 class UsersApi extends HttpApiGroup
@@ -55,6 +59,7 @@ describe('flattenHttpApiClient', () => {
           JSON.stringify(mockUser),
           {
             status: 200,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             headers: { 'Content-Type': 'application/json' },
           },
         ),
@@ -77,7 +82,7 @@ describe('flattenHttpApiClient', () => {
   it('should flatten the HttpApiClient', async () => {
     const effect = Effect
       .gen(function*() {
-        const client = yield* flattenHttpApiClient(httpApiClient)
+        const client = flattenHttpApiClient(yield* httpApiClient)
 
         // Test regular endpoint
         const user = yield* client.usersFindById({ path: { userId: 1 } })
@@ -91,6 +96,7 @@ describe('flattenHttpApiClient', () => {
           })
         expect(userWithResponse).toBeInstanceOf(User)
         expect(userWithResponse).toEqual(mockUser)
+
         expect(response).toEqual(expect.objectContaining({
           status: 200,
           headers: expect.any(Object),
@@ -105,8 +111,11 @@ describe('flattenHttpApiClient', () => {
     await Runtime.runPromise(runtime)(effect)
   })
 
-  it('should create a redux api slice from a flattened http api client', async () => {
-    const flattenedClientEffect = flattenHttpApiClient(httpApiClient)
+  it('should create a redux api slice from a flattened http api client', () => {
+    const flattenedClientEffect = Effect.map(
+      httpApiClient,
+      flattenHttpApiClient,
+    )
 
     class ApiService extends Context.Tag('ApiService')<
       ApiService,
@@ -117,28 +126,31 @@ describe('flattenHttpApiClient', () => {
     type AppServiceTagsTypes = typeof AppServiceTags[number]
     type RuntimeServices = Context.Tag.Identifier<AppServiceTagsTypes>
 
-    const api = createApiFromEffectTagFactory<RuntimeServices>()(
+    createApiFromEffectTagFactory<RuntimeServices>()(
       ApiService,
       {
         reducerPath: 'api',
-        tagTypes: ['User'] as const,
+        tagTypes: ['User'],
       },
       {
         usersFindById: {
-          type: DefinitionType.query as const,
+          type: DefinitionType.query,
         },
         usersFindByIdWithResponse: {
-          type: DefinitionType.query as const,
+          type: DefinitionType.query,
         },
         usersUpdate: {
-          type: DefinitionType.mutation as const,
+          type: DefinitionType.mutation,
         },
-      } as const,
+      },
     )
   })
 
   it('should allow a developer to easily mock the flattened http api client', async () => {
-    const flattenedClientEffect = flattenHttpApiClient(httpApiClient)
+    const flattenedClientEffect = Effect.map(
+      httpApiClient,
+      flattenHttpApiClient,
+    )
     const updatedUser = new User({
       id: 1,
       name: 'Jane Doe',
@@ -146,18 +158,16 @@ describe('flattenHttpApiClient', () => {
     })
 
     const mockedClient = flattenedClientEffect.pipe(
-      Effect.map(client => {
-        return {
-          ...client,
-          usersFindById: (args: Parameters<typeof client.usersFindById>[0]) =>
-            Effect.succeed(mockUser),
-          usersFindByIdWithResponse: (
-            args: Parameters<typeof client.usersFindByIdWithResponse>[0],
-          ) => Effect.succeed([mockUser, new Response()]),
-          usersUpdate: (args: Parameters<typeof client.usersUpdate>[0]) =>
-            Effect.succeed(updatedUser),
-        }
-      }),
+      Effect.map(client => ({
+        ...client,
+        usersFindById: (_: Parameters<typeof client.usersFindById>[0]) =>
+          Effect.succeed(mockUser),
+        usersFindByIdWithResponse: (
+          _: Parameters<typeof client.usersFindByIdWithResponse>[0],
+        ) => Effect.succeed([mockUser, new Response()]),
+        usersUpdate: (_: Parameters<typeof client.usersUpdate>[0]) =>
+          Effect.succeed(updatedUser),
+      })),
     )
 
     const program = Effect

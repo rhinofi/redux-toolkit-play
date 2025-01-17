@@ -9,8 +9,7 @@ import {
   HttpClientRequest,
 } from '@effect/platform'
 import type { HttpClientResponse } from '@effect/platform/HttpClientResponse'
-import type { Effect } from 'effect'
-import { Schema } from 'effect'
+import { Effect, Schema } from 'effect'
 import { describe, expectTypeOf, it } from 'vitest'
 import { flattenHttpApiClient } from './flattenHttpApiClient.js'
 
@@ -71,7 +70,7 @@ describe('flattenHttpApiClient', () => {
     })
 
     // Get flattened client
-    const flattened = flattenHttpApiClient(httpApiClient)
+    const flattened = Effect.map(httpApiClient, flattenHttpApiClient)
 
     // Test the type structure
     type FlattenedApi = Effect.Effect.Success<typeof flattened>
