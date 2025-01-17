@@ -42,10 +42,10 @@ export type TransformGroup<
   }[M]
   : never
 
-type FlattenedApi<T extends HttpApiClient.Client<any, any>> =
+export type FlattenedApi<T extends HttpApiClient.Client<any, any>> =
   UnionToIntersection<
     T extends Record<infer K extends string, any> ? {
-        [N in K]: TransformGroup<K, T[K]>
+        [N in K]: TransformGroup<N, T[N]>
       }[K]
       : never
   >

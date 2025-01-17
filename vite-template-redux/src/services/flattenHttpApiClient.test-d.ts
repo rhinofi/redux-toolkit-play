@@ -169,5 +169,12 @@ describe('flattenHttpApiClient', () => {
       | HttpClientError.HttpClientError
       | OtherError
     >()
+
+    expectTypeOf<keyof FlattenedApi>().toEqualTypeOf<
+      | 'usersFindById'
+      | 'usersFindByIdWithResponse'
+      | 'otherFindAll'
+      | 'otherFindAllWithResponse'
+    >()
   })
 })
